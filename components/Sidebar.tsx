@@ -84,7 +84,7 @@ const NAV_ITEMS = [
   },
   {
     href: "/team",
-    label: "Team Coach",
+    label: "Coach Aid",
     icon: (a: boolean) => (
       <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
         <circle cx="7" cy="7" r="3" stroke="currentColor" strokeWidth="1.5"
