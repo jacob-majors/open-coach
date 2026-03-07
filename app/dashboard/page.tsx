@@ -92,7 +92,7 @@ export default function DashboardPage() {
         {/* Today's Workout — main card */}
         <div className="md:col-span-2 lg:col-span-3">
           {todaysWorkout ? (
-            <TodaysWorkoutCard workout={todaysWorkout} latestTest={latestTest} />
+            <TodaysWorkoutCard workout={todaysWorkout} latestTest={latestTest ?? null} />
           ) : (
             <NoWorkoutCard />
           )}
