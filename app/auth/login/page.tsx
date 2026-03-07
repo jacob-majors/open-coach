@@ -78,13 +78,9 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <div className="mt-5 rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-4">
-          <p className="text-xs font-semibold text-yellow-400 mb-1">Firebase setup required</p>
-          <p className="text-xs text-white/40 leading-relaxed">
-            Add your Firebase credentials to <code className="text-white/60">.env.local</code> to enable Google sign-in.
-            See the deployment guide for step-by-step instructions.
-          </p>
-        </div>
+        <p className="mt-5 text-center text-xs text-white/20 leading-relaxed">
+          Free forever · No ads · Open source
+        </p>
       </div>
     </div>
   );
