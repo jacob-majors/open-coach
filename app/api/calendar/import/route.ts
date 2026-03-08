@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!(await requireCoach(session))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const { url, compTeam } = await req.json();
+  const { url, compTeam, limit } = await req.json();
   if (!url) return NextResponse.json({ error: "url required" }, { status: 400 });
 
   // Fetch the iCal file
@@ -112,6 +112,7 @@ export async function POST(req: NextRequest) {
   let skipped = 0;
 
   for (const ev of events) {
+    if (limit != null && imported >= limit) { skipped++; continue; }
     const { dateStr, timeStr } = parseIcalDate(ev.dtstart);
     if (dateStr < todayStr || dateStr > endStr) { skipped++; continue; }
 

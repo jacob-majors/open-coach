@@ -88,12 +88,30 @@ export async function DELETE(req: NextRequest) {
   if (!(await requireCoach(session))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const db = getDb();
-  // Delete all users except the currently logged-in user
-  const result = await db.execute({
-    sql: `DELETE FROM users WHERE id != ?`,
-    args: [session.userId],
-  });
+  const me = session.userId;
 
+  // Delete dependent rows first to satisfy FK constraints
+  await db.execute({ sql: `DELETE FROM followers WHERE follower_id != ? OR following_id != ?`, args: [me, me] });
+  await db.execute({ sql: `DELETE FROM activity WHERE user_id != ?`, args: [me] });
+  await db.execute({ sql: `DELETE FROM logs WHERE user_id != ?`, args: [me] });
+  await db.execute({ sql: `DELETE FROM tests WHERE user_id != ?`, args: [me] });
+  await db.execute({ sql: `DELETE FROM assessments WHERE user_id != ?`, args: [me] });
+  await db.execute({ sql: `DELETE FROM sends WHERE user_id != ?`, args: [me] });
+  await db.execute({ sql: `DELETE FROM benchmarks WHERE user_id != ?`, args: [me] });
+  await db.execute({ sql: `DELETE FROM user_plans WHERE user_id != ?`, args: [me] });
+  await db.execute({ sql: `DELETE FROM practices WHERE created_by != ?`, args: [me] });
+
+  // Delete plans created by other users (workouts cascade per schema)
+  const otherPlans = await db.execute({ sql: `SELECT id FROM plans WHERE creator_id != ?`, args: [me] });
+  const planIds = otherPlans.rows.map((r) => r.id as number);
+  if (planIds.length > 0) {
+    const placeholders = planIds.map(() => "?").join(",");
+    await db.execute({ sql: `DELETE FROM user_plans WHERE plan_id IN (${placeholders})`, args: planIds });
+    await db.execute({ sql: `DELETE FROM workouts WHERE plan_id IN (${placeholders})`, args: planIds });
+    await db.execute({ sql: `DELETE FROM plans WHERE creator_id != ?`, args: [me] });
+  }
+
+  const result = await db.execute({ sql: `DELETE FROM users WHERE id != ?`, args: [me] });
   return NextResponse.json({ success: true, deleted: Number(result.rowsAffected) });
 }
 

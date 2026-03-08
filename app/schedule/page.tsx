@@ -107,6 +107,7 @@ export default function CalendarPage() {
   const [showImport, setShowImport] = useState(false);
   const [importUrl, setImportUrl] = useState("");
   const [importTeam, setImportTeam] = useState("all");
+  const [importLimit, setImportLimit] = useState(50);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<{ imported: number; skipped: number } | null>(null);
 
@@ -205,7 +206,7 @@ export default function CalendarPage() {
             <p className="mt-1 text-sm text-white/40">Upcoming practices</p>
           </div>
           <div className="flex gap-2 shrink-0">
-            <button onClick={() => { setShowImport(true); setImportResult(null); setImportUrl(""); setImportTeam(filterTeam !== "all" ? filterTeam : "2"); }}
+            <button onClick={() => { setShowImport(true); setImportResult(null); setImportUrl(""); setImportTeam(filterTeam !== "all" ? filterTeam : "2"); setImportLimit(50); }}
               className="btn-ghost text-sm flex items-center gap-1.5">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M7 1v8M4 6l3 3 3-3M2 11h10" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
@@ -292,6 +293,18 @@ export default function CalendarPage() {
                     {[1, 2, 3, 4].map((t) => <option key={t} value={t}>Comp Team {t}</option>)}
                   </select>
                 </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="label">Max events to import</label>
+                    <span className="text-xs font-semibold text-brand-400">{importLimit === 200 ? "All" : importLimit}</span>
+                  </div>
+                  <input type="range" min={5} max={200} step={5} value={importLimit}
+                    onChange={(e) => setImportLimit(Number(e.target.value))} disabled={importing}
+                    className="w-full accent-brand-500" />
+                  <div className="flex justify-between text-[10px] text-white/20 mt-0.5">
+                    <span>5</span><span>All</span>
+                  </div>
+                </div>
                 {importResult && (
                   <div className="rounded-xl border border-green-500/20 bg-green-500/10 px-4 py-3 text-sm text-green-400">
                     ✓ Imported {importResult.imported} practice{importResult.imported !== 1 ? "s" : ""}
@@ -312,6 +325,7 @@ export default function CalendarPage() {
                         body: JSON.stringify({
                           url: importUrl.trim(),
                           compTeam: importTeam !== "all" ? parseInt(importTeam) : null,
+                          limit: importLimit < 200 ? importLimit : null,
                         }),
                       });
                       const d = await res.json();
@@ -606,6 +620,7 @@ function SubscribeModal({ filterTeam, onClose, copiedUrl, setCopiedUrl }: {
 
 function PracticeCard({ practice, onDelete }: { practice: Practice; onDelete: () => void }) {
   const teamColor = practice.comp_team ? TEAM_COLORS[String(practice.comp_team)] : "bg-white/5 text-white/40 border-white/10";
+  const displayNotes = practice.notes?.replace(/\[uid:[^\]]+\]/g, "").trim() || null;
   return (
     <div className="card">
       <div className="flex items-start gap-3">
@@ -629,7 +644,7 @@ function PracticeCard({ practice, onDelete }: { practice: Practice; onDelete: ()
             {practice.location && <span>{practice.location}</span>}
             {practice.coach_name && <span className="text-white/60">Coach: {practice.coach_name}</span>}
           </div>
-          {practice.notes && <p className="mt-1.5 text-xs text-white/30 line-clamp-2">{practice.notes}</p>}
+          {displayNotes && <p className="mt-1.5 text-xs text-white/30 line-clamp-2">{displayNotes}</p>}
         </div>
         <button onClick={onDelete}
           className="shrink-0 p-1.5 rounded-lg text-white/20 hover:text-red-400 hover:bg-red-500/10 transition">

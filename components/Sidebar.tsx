@@ -190,11 +190,13 @@ export default function Sidebar() {
       {user && (
         <div className="px-5 pb-3">
           <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold border ${
-            isCoach
+            user?.role === "admin"
+              ? "bg-purple-500/10 text-purple-400 border-purple-500/20"
+              : isCoach
               ? "bg-brand-500/10 text-brand-400 border-brand-500/20"
               : "bg-white/[0.05] text-white/40 border-white/[0.08]"
           }`}>
-            {isCoach ? "Coach" : "Athlete"}
+            {user?.role === "admin" ? "Admin" : isCoach ? "Coach" : "Athlete"}
           </span>
         </div>
       )}
