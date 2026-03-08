@@ -23,15 +23,12 @@ export default function Navigation() {
     <header className="sticky top-0 z-40 hidden md:block border-b border-white/[0.06] bg-[#0a0a0a]/90 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
         {/* Logo */}
-        <Link href="/dashboard" className="flex items-center gap-2 group">
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-brand-500">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M8 2L14 12H2L8 2Z" fill="black" strokeWidth="0"/>
-            </svg>
-          </div>
-          <span className="text-sm font-bold tracking-tight text-white group-hover:text-brand-400 transition">
-            Session
-          </span>
+        <Link href="/dashboard" className="flex items-center group">
+          <img
+            src="https://images.squarespace-cdn.com/content/v1/68954b21a7199d4b85be89c8/178ac0ce-b5b9-4913-aa0a-bdb22ebe2232/session-team-white.png?format=1500w"
+            alt="Session Team"
+            className="h-7 w-auto object-contain group-hover:opacity-80 transition"
+          />
         </Link>
 
         {/* Nav links */}

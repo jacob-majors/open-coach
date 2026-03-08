@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
     args: team && team !== "all" ? [fromStr, parseInt(team)] : [fromStr],
   });
 
-  const calName = team && team !== "all" ? `Session · Team ${team}` : "Session · All Practices";
+  const calName = team && team !== "all" ? `Session Team · Team ${team}` : "Session Team · All Practices";
   const now = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
 
   const events = result.rows.map((p) => {

@@ -175,16 +175,14 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="p-5 pb-4">
         <Link href="/dashboard" className="flex items-center gap-2.5 group">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 shrink-0">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M8 2L14 12H2L8 2Z" fill="black"/>
-            </svg>
-          </div>
-          <div>
-            <p className="text-sm font-bold text-white leading-none group-hover:text-brand-400 transition">
-              Session
-            </p>
-          </div>
+          <Image
+            src="https://images.squarespace-cdn.com/content/v1/68954b21a7199d4b85be89c8/178ac0ce-b5b9-4913-aa0a-bdb22ebe2232/session-team-white.png?format=1500w"
+            alt="Session Team"
+            width={120}
+            height={40}
+            className="h-8 w-auto object-contain group-hover:opacity-80 transition"
+            unoptimized
+          />
         </Link>
       </div>
 

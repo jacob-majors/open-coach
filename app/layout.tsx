@@ -4,7 +4,7 @@ import Sidebar from "@/components/Sidebar";
 import MobileNav from "@/components/MobileNav";
 
 export const metadata: Metadata = {
-  title: "Session — Climbing Training Platform",
+  title: "Session Team — Climbing Training Platform",
   description:
     "A climbing training platform with structured workouts, finger strength tracking, and personalized training plans.",
   keywords: ["climbing", "training", "hangboard", "finger strength", "bouldering", "sport climbing"],

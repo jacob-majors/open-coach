@@ -38,13 +38,12 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-500">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-              <path d="M12 3L21 18H3L12 3Z" fill="black"/>
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold text-white">Session</h1>
-          <p className="mt-1 text-sm text-white/40">Free climbing training, forever</p>
+          <img
+            src="https://images.squarespace-cdn.com/content/v1/68954b21a7199d4b85be89c8/178ac0ce-b5b9-4913-aa0a-bdb22ebe2232/session-team-white.png?format=1500w"
+            alt="Session Team"
+            className="mx-auto mb-4 h-14 w-auto object-contain"
+          />
+          <p className="mt-1 text-sm text-white/40">Climbing training platform</p>
         </div>
 
         <div className="card space-y-4">
