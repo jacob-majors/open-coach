@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTimer } from "@/lib/hooks/useTimer";
 import { formatTimerDisplay } from "@/lib/utils";
 import type { WorkoutProtocol } from "@/types";
@@ -12,15 +12,19 @@ interface HangboardTimerProps {
 }
 
 export default function HangboardTimer({ protocol, onComplete, backHref }: HangboardTimerProps) {
+  const router = useRouter();
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [vibrationEnabled, setVibrationEnabled] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showBackConfirm, setShowBackConfirm] = useState(false);
 
   const { state, toggle, reset } = useTimer(protocol, {
     onComplete,
     enableAudio: audioEnabled,
     enableVibration: vibrationEnabled,
   });
+
+  const isActive = state.phase !== "idle" && state.phase !== "complete";
 
   // Screen Wake Lock
   useEffect(() => {
@@ -36,22 +40,37 @@ export default function HangboardTimer({ protocol, onComplete, backHref }: Hangb
     };
   }, [state.phase]);
 
-  // Fullscreen API
+  // Fullscreen API (with webkit fallback for iOS Safari)
   const toggleFullscreen = useCallback(async () => {
-    if (!document.fullscreenElement) {
-      await document.documentElement.requestFullscreen().catch(() => {});
-      setIsFullscreen(true);
+    const el = document.documentElement as HTMLElement & { webkitRequestFullscreen?: () => Promise<void> };
+    const doc = document as Document & { webkitExitFullscreen?: () => Promise<void>; webkitFullscreenElement?: Element };
+    const inFullscreen = !!document.fullscreenElement || !!doc.webkitFullscreenElement;
+    if (!inFullscreen) {
+      await (el.requestFullscreen?.() || el.webkitRequestFullscreen?.())?.catch(() => {});
     } else {
-      await document.exitFullscreen().catch(() => {});
-      setIsFullscreen(false);
+      await (document.exitFullscreen?.() || doc.webkitExitFullscreen?.())?.catch(() => {});
     }
   }, []);
 
   useEffect(() => {
     const handler = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener("fullscreenchange", handler);
-    return () => document.removeEventListener("fullscreenchange", handler);
+    document.addEventListener("webkitfullscreenchange", handler);
+    return () => {
+      document.removeEventListener("fullscreenchange", handler);
+      document.removeEventListener("webkitfullscreenchange", handler);
+    };
   }, []);
+
+  // Auto-fullscreen on mobile when timer starts
+  useEffect(() => {
+    if (state.phase === "hang" && !isFullscreen) {
+      const el = document.documentElement as HTMLElement & { webkitRequestFullscreen?: () => Promise<void> };
+      if (window.innerWidth < 768) {
+        (el.requestFullscreen?.() || el.webkitRequestFullscreen?.())?.catch(() => {});
+      }
+    }
+  }, [state.phase, isFullscreen]);
 
   const { phase, secondsLeft, currentRep, currentSet, totalReps, totalSets } = state;
 
@@ -86,14 +105,16 @@ export default function HangboardTimer({ protocol, onComplete, backHref }: Hangb
       >
         <div className="flex items-center gap-2 py-2 min-w-0">
           {backHref && (
-            <Link
-              href={backHref}
+            <button
+              onClick={() => {
+                if (isActive) { setShowBackConfirm(true); } else { router.push(backHref); }
+              }}
               className="shrink-0 rounded-xl p-2 text-white/30 hover:text-white/70 transition active:scale-95"
             >
               <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
                 <path d="M13 4l-6 6 6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-            </Link>
+            </button>
           )}
           <div className="min-w-0">
             <p className="text-sm font-semibold text-white leading-tight truncate max-w-[180px] md:max-w-xs">
@@ -242,6 +263,30 @@ export default function HangboardTimer({ protocol, onComplete, backHref }: Hangb
         </div>
         <p className="text-[10px] text-white/20">Press Space to start / pause</p>
       </div>
+
+      {/* Back confirmation overlay */}
+      {showBackConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-6">
+          <div className="w-full max-w-xs rounded-2xl border border-white/10 bg-[#111] p-6 text-center shadow-2xl">
+            <p className="text-base font-semibold text-white mb-1">Leave workout?</p>
+            <p className="text-sm text-white/40 mb-5">Your timer progress will be lost.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowBackConfirm(false); }}
+                className="flex-1 rounded-xl border border-white/10 bg-white/5 py-3 text-sm font-medium text-white hover:bg-white/10 transition"
+              >
+                Keep going
+              </button>
+              <button
+                onClick={() => { if (backHref) router.push(backHref); }}
+                className="flex-1 rounded-xl bg-red-500/20 border border-red-500/30 py-3 text-sm font-medium text-red-400 hover:bg-red-500/30 transition"
+              >
+                Leave
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

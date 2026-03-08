@@ -157,9 +157,32 @@ export async function initializeDb() {
       notes TEXT,
       recorded_at TEXT DEFAULT (datetime('now'))
     )`,
+    `CREATE TABLE IF NOT EXISTS practices (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      comp_team INTEGER,
+      practice_date TEXT NOT NULL,
+      start_time TEXT,
+      duration_minutes INTEGER DEFAULT 90,
+      location TEXT,
+      notes TEXT,
+      plan_id INTEGER REFERENCES plans(id),
+      coach_id INTEGER REFERENCES users(id),
+      is_recurring INTEGER DEFAULT 0,
+      recurrence_rule TEXT,
+      recurrence_end_date TEXT,
+      parent_practice_id INTEGER REFERENCES practices(id),
+      created_by INTEGER NOT NULL REFERENCES users(id),
+      created_at TEXT DEFAULT (datetime('now'))
+    )`,
+    `ALTER TABLE users ADD COLUMN comp_team INTEGER`,
   ];
 
   for (const sql of tables) {
-    await db.execute(sql);
+    try {
+      await db.execute(sql);
+    } catch {
+      // Ignore "duplicate column" errors from ALTER TABLE
+    }
   }
 }
