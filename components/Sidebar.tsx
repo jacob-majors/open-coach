@@ -174,13 +174,13 @@ export default function Sidebar() {
     <aside className="hidden md:flex flex-col w-56 shrink-0 border-r border-white/[0.06] bg-[#0d0d0d] sticky top-0 h-dvh overflow-y-auto">
       {/* Logo */}
       <div className="p-5 pb-4">
-        <Link href="/dashboard" className="flex items-center gap-2.5 group">
+        <Link href="/dashboard" className="flex items-center justify-center group w-full">
           <Image
             src="https://images.squarespace-cdn.com/content/v1/68954b21a7199d4b85be89c8/178ac0ce-b5b9-4913-aa0a-bdb22ebe2232/session-team-white.png?format=1500w"
             alt="Session Team"
-            width={120}
-            height={40}
-            className="h-8 w-auto object-contain group-hover:opacity-80 transition"
+            width={140}
+            height={44}
+            className="h-9 w-auto object-contain group-hover:opacity-80 transition"
             unoptimized
           />
         </Link>

@@ -84,6 +84,7 @@ function parseCsv(text: string) {
 export default function RosterPage() {
   const { user, loading } = useAuth();
   const isCoach = user?.role === "coach" || user?.role === "admin";
+  const isAdmin = user?.role === "admin" || (user as { is_admin?: number } | null)?.is_admin === 1;
 
   const [athletes, setAthletes] = useState<RosterUser[]>([]);
   const [fetching, setFetching] = useState(true);
@@ -102,6 +103,11 @@ export default function RosterPage() {
 
   // Coach bio modal
   const [selectedCoach, setSelectedCoach] = useState<RosterUser | null>(null);
+
+  // Edit modal (admin)
+  const [editTarget, setEditTarget] = useState<RosterUser | null>(null);
+  const [editForm, setEditForm] = useState({ name: "", bio: "", role: "athlete", compTeam: "" });
+  const [saving, setSaving] = useState(false);
 
   // Clear roster
   const [showClear, setShowClear] = useState(false);
@@ -261,7 +267,21 @@ export default function RosterPage() {
                       {coach.display_name || coach.username}
                     </p>
                   </div>
-                  <span className="text-[10px] text-brand-400/60 shrink-0">Coach</span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold border bg-brand-500/10 text-brand-400 border-brand-500/20">
+                      Coach
+                    </span>
+                    {isAdmin && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setEditTarget(coach); setEditForm({ name: coach.display_name || coach.username, bio: coach.bio || "", role: coach.role || "coach", compTeam: "" }); }}
+                        className="h-6 w-6 rounded-lg border border-white/10 bg-white/5 text-white/30 hover:text-white hover:bg-white/10 transition flex items-center justify-center"
+                        title="Edit">
+                        <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                          <path d="M8.5 1.5l2 2L4 10H2V8L8.5 1.5z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                    )}
+                  </div>
                 </div>
                 {coach.bio && (
                   <p className="mt-2 text-xs text-white/30 line-clamp-2">{coach.bio}</p>
@@ -331,10 +351,23 @@ export default function RosterPage() {
                         {TEAM_LABELS[String(athlete.comp_team)]}
                       </span>
                     )}
+                    <span className="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold border bg-white/[0.04] text-white/30 border-white/[0.08]">
+                      Athlete
+                    </span>
                   </div>
                   {athlete.bio && <p className="text-xs text-white/30 mt-0.5 truncate">{athlete.bio}</p>}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
+                  {isAdmin && (
+                    <button
+                      onClick={() => { setEditTarget(athlete); setEditForm({ name: athlete.display_name || athlete.username, bio: athlete.bio || "", role: athlete.role || "athlete", compTeam: athlete.comp_team ? String(athlete.comp_team) : "" }); }}
+                      className="h-7 w-7 rounded-lg border border-white/10 bg-white/5 text-white/30 hover:text-white hover:bg-white/10 transition flex items-center justify-center mr-1"
+                      title="Edit">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <path d="M8.5 1.5l2 2L4 10H2V8L8.5 1.5z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/>
+                      </svg>
+                    </button>
+                  )}
                   {[1, 2, 3, 4].map((t) => (
                     <button key={t} onClick={() => assignTeam(athlete.id, athlete.comp_team === t ? null : t)}
                       disabled={updating === athlete.id}
@@ -390,6 +423,80 @@ export default function RosterPage() {
                 onClick={() => setSelectedCoach(null)}>
                 View Full Profile
               </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {editTarget && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm px-4 pb-4 sm:pb-0"
+          onClick={(e) => { if (e.target === e.currentTarget) setEditTarget(null); }}>
+          <div className="w-full max-w-md rounded-2xl border border-white/[0.08] bg-[#111] p-5 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-semibold text-white">Edit Person</h2>
+              <button onClick={() => setEditTarget(null)} className="text-white/40 hover:text-white">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="label">Name</label>
+                <input type="text" className="input" value={editForm.name}
+                  onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} />
+              </div>
+              <div>
+                <label className="label">Bio</label>
+                <textarea className="input resize-none min-h-[80px]" value={editForm.bio}
+                  onChange={(e) => setEditForm((f) => ({ ...f, bio: e.target.value }))} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="label">Role</label>
+                  <select className="input" value={editForm.role}
+                    onChange={(e) => setEditForm((f) => ({ ...f, role: e.target.value }))}>
+                    <option value="athlete">Athlete</option>
+                    <option value="coach">Coach</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="label">Team</label>
+                  <select className="input" value={editForm.compTeam}
+                    onChange={(e) => setEditForm((f) => ({ ...f, compTeam: e.target.value }))}>
+                    <option value="">No team</option>
+                    {[1, 2, 3, 4].map((t) => <option key={t} value={t}>Team {t}</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-4">
+              <button
+                disabled={saving}
+                onClick={async () => {
+                  setSaving(true);
+                  await fetch("/api/roster", {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      userId: editTarget.id,
+                      displayName: editForm.name.trim(),
+                      bio: editForm.bio.trim() || null,
+                      role: editForm.role,
+                      compTeam: editForm.compTeam ? parseInt(editForm.compTeam) : null,
+                    }),
+                  });
+                  const d = await fetch("/api/roster").then((r) => r.json());
+                  setAthletes(d.athletes || []);
+                  setEditTarget(null);
+                  setSaving(false);
+                }}
+                className="btn-primary flex-1">
+                {saving ? "Saving..." : "Save Changes"}
+              </button>
+              <button onClick={() => setEditTarget(null)} className="btn-ghost px-4">Cancel</button>
             </div>
           </div>
         </div>

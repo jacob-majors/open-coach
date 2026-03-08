@@ -102,12 +102,34 @@ export async function PATCH(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!(await requireCoach(session))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const { userId, compTeam } = await req.json();
+  const body = await req.json();
+  const { userId, compTeam, displayName, bio, role } = body;
   const db = getDb();
-  await db.execute({
-    sql: `UPDATE users SET comp_team = ? WHERE id = ?`,
-    args: [compTeam ?? null, userId],
-  });
+
+  if (displayName !== undefined || bio !== undefined || role !== undefined) {
+    // Full edit (admin)
+    await db.execute({
+      sql: `UPDATE users SET
+              display_name = COALESCE(?, display_name),
+              bio = CASE WHEN ? IS NOT NULL THEN ? ELSE bio END,
+              role = COALESCE(?, role),
+              comp_team = CASE WHEN ? IS NOT NULL THEN ? ELSE comp_team END
+            WHERE id = ?`,
+      args: [
+        displayName ?? null,
+        bio ?? null, bio ?? null,
+        role ?? null,
+        compTeam ?? null, compTeam ?? null,
+        userId,
+      ],
+    });
+  } else {
+    // Team-only update
+    await db.execute({
+      sql: `UPDATE users SET comp_team = ? WHERE id = ?`,
+      args: [compTeam ?? null, userId],
+    });
+  }
 
   return NextResponse.json({ success: true });
 }

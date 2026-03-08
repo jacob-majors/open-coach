@@ -40,6 +40,8 @@ export async function POST(req: NextRequest) {
   let userId: number;
   let username: string;
 
+  const isAdmin = email === "jacobmajors2017@gmail.com";
+
   if (user.rows.length === 0) {
     // New user — find a unique username
     let finalUsername = baseUsername || "climber";
@@ -53,15 +55,22 @@ export async function POST(req: NextRequest) {
 
     // Create with a placeholder password hash (OAuth users don't use password login)
     const result = await db.execute({
-      sql: `INSERT INTO users (username, email, password_hash, display_name)
-            VALUES (?, ?, 'firebase-oauth', ?)`,
-      args: [finalUsername, email, displayName],
+      sql: `INSERT INTO users (username, email, password_hash, display_name, role, is_admin)
+            VALUES (?, ?, 'firebase-oauth', ?, ?, ?)`,
+      args: [finalUsername, email, displayName, isAdmin ? "admin" : "athlete", isAdmin ? 1 : 0],
     });
     userId = Number(result.lastInsertRowid);
     username = finalUsername;
   } else {
     userId = user.rows[0].id as number;
     username = user.rows[0].username as string;
+    // Ensure admin status is always up to date
+    if (isAdmin) {
+      await db.execute({
+        sql: `UPDATE users SET role = 'admin', is_admin = 1 WHERE id = ?`,
+        args: [userId],
+      });
+    }
   }
 
   // Create our session JWT
