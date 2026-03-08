@@ -38,23 +38,30 @@ function parseTeamNumber(val: string): number | null {
 }
 
 function parseCsv(text: string) {
-  const lines = text.trim().split("\n").filter(Boolean);
+  // Normalize line endings and split
+  const lines = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim().split("\n").filter(Boolean);
   const athletes: Array<{ name: string; email: string; bio?: string; compTeam?: number | null }> = [];
   const coaches: Array<{ name: string; email: string; bio?: string }> = [];
 
+  // Detect delimiter: tab or comma
+  const firstLine = lines[0] || "";
+  const delim = firstLine.includes("\t") ? "\t" : ",";
+
+  let idx = 0;
   for (const line of lines) {
-    const cols = line.split("\t").map((s) => s.trim().replace(/^"|"$/g, ""));
-    if (cols.length < 2) continue;
+    const cols = line.split(delim).map((s) => s.trim().replace(/^"|"$/g, ""));
     const [firstName, lastName, bio, role, team] = cols;
     if (!firstName) continue;
-    // Skip header row
-    if (firstName.toLowerCase() === "first name") continue;
+    // Skip header rows
+    if (firstName.toLowerCase() === "first name" || firstName.toLowerCase() === "firstname") continue;
 
     const fullName = [firstName, lastName].filter(Boolean).join(" ");
-    const emailBase = `${firstName.toLowerCase()}${lastName ? "." + lastName.toLowerCase() : ""}`.replace(/[^a-z0-9.]/g, "");
-    const email = `${emailBase}@placeholder.com`;
+    // Generate a unique placeholder email using index to avoid collisions
+    const nameSlug = `${firstName.toLowerCase()}${lastName ? lastName.toLowerCase() : ""}`.replace(/[^a-z0-9]/g, "");
+    const email = `${nameSlug || "user"}${idx}@opencoach.placeholder`;
+    idx++;
 
-    const isCoachRole = role?.toLowerCase().includes("coach");
+    const isCoachRole = role?.toLowerCase().trim().includes("coach");
     const teamNum = team ? parseTeamNumber(team) : null;
 
     if (isCoachRole) {

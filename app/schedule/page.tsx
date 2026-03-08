@@ -99,6 +99,10 @@ export default function CalendarPage() {
   const [filterTeam, setFilterTeam] = useState("all");
   const [fetching, setFetching] = useState(true);
 
+  // Subscribe modal
+  const [showSubscribe, setShowSubscribe] = useState(false);
+  const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
+
   // New practice modal
   const [showNew, setShowNew] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -193,8 +197,17 @@ export default function CalendarPage() {
             <h1 className="text-2xl font-bold text-white">Calendar</h1>
             <p className="mt-1 text-sm text-white/40">Upcoming practices</p>
           </div>
-          <button onClick={() => { setShowNew(true); setForm({ ...EMPTY_FORM, practiceDate: today }); }}
-            className="btn-primary text-sm shrink-0">+ Practice</button>
+          <div className="flex gap-2 shrink-0">
+            <button onClick={() => setShowSubscribe(true)}
+              className="btn-ghost text-sm flex items-center gap-1.5">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M2 12a1 1 0 11-2 0 1 1 0 012 0zM0 5c3.866 0 7 3.134 7 7H5.5C5.5 9.015 3.985 7.5 2 7.5V5zM0 1C6.627 1 11 6.373 11 13H9.5C9.5 7.201 5.799 3.5 0 3.5V1z" fill="currentColor"/>
+              </svg>
+              Subscribe
+            </button>
+            <button onClick={() => { setShowNew(true); setForm({ ...EMPTY_FORM, practiceDate: today }); }}
+              className="btn-primary text-sm">+ Practice</button>
+          </div>
         </div>
 
         {/* Team filter */}
@@ -236,6 +249,16 @@ export default function CalendarPage() {
               );
             })}
           </div>
+        )}
+
+        {/* Subscribe Modal */}
+        {showSubscribe && (
+          <SubscribeModal
+            filterTeam={filterTeam}
+            onClose={() => { setShowSubscribe(false); setCopiedUrl(null); }}
+            copiedUrl={copiedUrl}
+            setCopiedUrl={setCopiedUrl}
+          />
         )}
 
         {/* New Practice Modal */}
@@ -400,6 +423,99 @@ export default function CalendarPage() {
       ) : (
         <MySchedule data={schedData} expandedWeek={expandedWeek} setExpandedWeek={setExpandedWeek} />
       )}
+    </div>
+  );
+}
+
+// ── Subscribe Modal ───────────────────────────────────────────────────────────
+
+function SubscribeModal({ filterTeam, onClose, copiedUrl, setCopiedUrl }: {
+  filterTeam: string;
+  onClose: () => void;
+  copiedUrl: string | null;
+  setCopiedUrl: (url: string | null) => void;
+}) {
+  const base = typeof window !== "undefined" ? window.location.origin : "";
+  const teamParam = filterTeam !== "all" ? `?team=${filterTeam}` : "";
+  const icalUrl = `${base}/api/calendar/ical${teamParam}`;
+  const rssUrl = `${base}/api/calendar/rss${teamParam}`;
+
+  const copy = (url: string) => {
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedUrl(url);
+      setTimeout(() => setCopiedUrl(null), 2000);
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm px-4 pb-4 sm:pb-0"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="w-full max-w-md rounded-2xl border border-white/[0.08] bg-[#111] p-5 shadow-xl">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-semibold text-white">Subscribe to Calendar</h2>
+          <button onClick={onClose} className="text-white/40 hover:text-white">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        {filterTeam !== "all" && (
+          <p className="text-xs text-white/40 mb-4">
+            Showing feed for <span className="text-brand-400">Comp Team {filterTeam}</span>. Switch the team filter to get a different team&apos;s feed.
+          </p>
+        )}
+
+        <div className="space-y-3">
+          {/* iCal */}
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <div>
+                <p className="text-sm font-semibold text-white">iCal / ICS Feed</p>
+                <p className="text-xs text-white/40 mt-0.5">Works with Google Calendar, Apple Calendar, Outlook</p>
+              </div>
+              <span className="shrink-0 rounded-md bg-brand-500/10 text-brand-400 border border-brand-500/20 px-2 py-0.5 text-[10px] font-semibold">
+                Recommended
+              </span>
+            </div>
+            <div className="flex gap-2 mt-3">
+              <input readOnly value={icalUrl}
+                className="flex-1 rounded-lg bg-white/[0.05] border border-white/[0.06] px-3 py-2 text-xs text-white/50 font-mono truncate" />
+              <button onClick={() => copy(icalUrl)}
+                className={`shrink-0 rounded-lg px-3 py-2 text-xs font-semibold transition ${
+                  copiedUrl === icalUrl ? "bg-green-500/20 text-green-400" : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+                }`}>
+                {copiedUrl === icalUrl ? "Copied!" : "Copy"}
+              </button>
+            </div>
+            <a href={icalUrl} className="mt-2 inline-block text-xs text-brand-400 hover:underline">
+              Download .ics file →
+            </a>
+          </div>
+
+          {/* RSS */}
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+            <div className="mb-2">
+              <p className="text-sm font-semibold text-white">RSS Feed</p>
+              <p className="text-xs text-white/40 mt-0.5">For RSS readers (Feedly, Reeder, etc.)</p>
+            </div>
+            <div className="flex gap-2 mt-3">
+              <input readOnly value={rssUrl}
+                className="flex-1 rounded-lg bg-white/[0.05] border border-white/[0.06] px-3 py-2 text-xs text-white/50 font-mono truncate" />
+              <button onClick={() => copy(rssUrl)}
+                className={`shrink-0 rounded-lg px-3 py-2 text-xs font-semibold transition ${
+                  copiedUrl === rssUrl ? "bg-green-500/20 text-green-400" : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+                }`}>
+                {copiedUrl === rssUrl ? "Copied!" : "Copy"}
+              </button>
+            </div>
+          </div>
+
+          <p className="text-xs text-white/30 text-center">
+            In Google Calendar: click + → &ldquo;From URL&rdquo; and paste the iCal link
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
