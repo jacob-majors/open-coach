@@ -1,6 +1,7 @@
 "use client";
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import HangboardTimer from "@/components/timer/HangboardTimer";
 import type { WorkoutProtocol } from "@/types";
 
