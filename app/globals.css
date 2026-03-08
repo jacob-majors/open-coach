@@ -33,6 +33,11 @@
 }
 
 @layer utilities {
+  /* iPhone safe area support */
+  .pb-safe {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+
   .timer-display {
     font-family: 'JetBrains Mono', monospace;
     font-variant-numeric: tabular-nums;

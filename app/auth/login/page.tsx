@@ -73,7 +73,7 @@ export default function LoginPage() {
           )}
 
           <p className="text-center text-xs text-white/20 leading-relaxed">
-            By signing in you agree to use Open Coach responsibly.<br/>
+            New? Your account is created automatically.<br/>
             No spam. No selling data. Free forever.
           </p>
         </div>

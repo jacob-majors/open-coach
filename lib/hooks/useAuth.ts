@@ -5,6 +5,8 @@ interface AuthUser {
   userId: number;
   username: string;
   email: string;
+  role: string | null;
+  is_admin: number;
 }
 
 export function useAuth() {

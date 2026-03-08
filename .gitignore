@@ -37,3 +37,6 @@ next-env.d.ts
 # database
 *.db
 *.sqlite
+
+# Firebase service account credentials
+*firebase-adminsdk*.json

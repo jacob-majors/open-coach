@@ -10,7 +10,7 @@ export async function GET() {
 
   const db = getDb();
 
-  const [user, recentLogs, latestTest, activePlan, recentTests] = await Promise.all([
+  const [user, recentLogs, latestTest, activePlan, recentTests, recentSends, benchmarks] = await Promise.all([
     db.execute({
       sql: `SELECT id, username, display_name, bodyweight_lbs, max_boulder_grade, target_boulder_grade
             FROM users WHERE id = ?`,
@@ -34,7 +34,17 @@ export async function GET() {
     }),
     db.execute({
       sql: `SELECT percent_bodyweight, tested_at FROM tests WHERE user_id = ?
-            ORDER BY tested_at DESC LIMIT 6`,
+            ORDER BY tested_at DESC LIMIT 12`,
+      args: [session.userId],
+    }),
+    db.execute({
+      sql: `SELECT grade, problem_name, location, style, notes, sent_at FROM sends
+            WHERE user_id = ? ORDER BY sent_at DESC LIMIT 5`,
+      args: [session.userId],
+    }),
+    db.execute({
+      sql: `SELECT type, value, recorded_at FROM benchmarks WHERE user_id = ?
+            ORDER BY recorded_at DESC`,
       args: [session.userId],
     }),
   ]);
@@ -66,11 +76,20 @@ export async function GET() {
     }
   }
 
+  // Latest per benchmark type
+  const benchmarkMap: Record<string, number> = {};
+  for (const b of benchmarks.rows) {
+    const t = b.type as string;
+    if (!(t in benchmarkMap)) benchmarkMap[t] = b.value as number;
+  }
+
   return NextResponse.json({
     user: user.rows[0] || null,
     todaysWorkout,
     recentLogs: recentLogs.rows,
     latestTest: latestTest.rows[0] || null,
     testHistory: recentTests.rows.reverse(),
+    recentSends: recentSends.rows,
+    benchmarks: benchmarkMap,
   });
 }

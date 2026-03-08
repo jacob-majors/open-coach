@@ -39,6 +39,8 @@ export async function initializeDb() {
       target_rope_grade TEXT,
       target_boulder_grade TEXT,
       avatar_url TEXT,
+      role TEXT DEFAULT 'athlete',
+      is_admin INTEGER DEFAULT 0,
       created_at TEXT DEFAULT (datetime('now'))
     )`,
     `CREATE TABLE IF NOT EXISTS plans (
@@ -135,6 +137,25 @@ export async function initializeDb() {
       subtitle TEXT,
       metadata TEXT,
       created_at TEXT DEFAULT (datetime('now'))
+    )`,
+    `CREATE TABLE IF NOT EXISTS sends (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL REFERENCES users(id),
+      grade TEXT NOT NULL,
+      problem_name TEXT,
+      location TEXT,
+      style TEXT,
+      attempts INTEGER,
+      notes TEXT,
+      sent_at TEXT DEFAULT (datetime('now'))
+    )`,
+    `CREATE TABLE IF NOT EXISTS benchmarks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL REFERENCES users(id),
+      type TEXT NOT NULL,
+      value REAL NOT NULL,
+      notes TEXT,
+      recorded_at TEXT DEFAULT (datetime('now'))
     )`,
   ];
 

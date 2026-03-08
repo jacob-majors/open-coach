@@ -24,7 +24,7 @@ export async function GET() {
   const result = await db.execute({
     sql: `SELECT id, username, email, display_name, bio, bodyweight_lbs,
             max_rope_grade, max_boulder_grade, target_rope_grade, target_boulder_grade,
-            avatar_url, created_at
+            avatar_url, role, is_admin, created_at
           FROM users WHERE id = ?`,
     args: [session.userId],
   });

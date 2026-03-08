@@ -72,13 +72,15 @@ const NAV_ITEMS = [
     ),
   },
   {
-    href: "/ai",
-    label: "AI Coach",
+    href: "/community",
+    label: "Community",
     icon: (a: boolean) => (
       <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-        <path d="M17 10c0 3.866-3.134 7-7 7a6.98 6.98 0 01-4.03-1.27L3 17l1.27-2.97A6.98 6.98 0 013 10c0-3.866 3.134-7 7-7s7 3.134 7 7z"
-          stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"
-          fill={a ? "currentColor" : "none"} fillOpacity={a ? 0.1 : 0}/>
+        <circle cx="7" cy="6" r="3" stroke="currentColor" strokeWidth="1.5"
+          fill={a ? "currentColor" : "none"} fillOpacity={a ? 0.15 : 0}/>
+        <circle cx="14" cy="6" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
+        <path d="M1 17c0-2.761 2.686-5 6-5s6 2.239 6 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <path d="M14 10.5c1.657 0 3 1.343 3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
       </svg>
     ),
   },
@@ -160,16 +162,6 @@ export default function Sidebar() {
 
       {/* Bottom */}
       <div className="px-3 pb-5 space-y-1">
-        <a
-          href={process.env.NEXT_PUBLIC_SUPPORT_URL || "https://buymeacoffee.com/opencoach"}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs text-yellow-400/60 hover:text-yellow-400 hover:bg-yellow-500/5 transition"
-        >
-          <span>☕</span>
-          Support Open Coach
-        </a>
-
         {loading ? (
           <div className="h-14 animate-pulse rounded-lg bg-white/[0.05]" />
         ) : user ? (
@@ -198,12 +190,20 @@ export default function Sidebar() {
                 <p className="text-[10px] text-white/40 truncate">@{user.username}</p>
               </div>
             </Link>
-            <button
-              onClick={logout}
-              className="w-full text-left text-[11px] text-white/25 hover:text-white/50 transition"
-            >
-              Sign out
-            </button>
+            <div className="flex items-center justify-between mt-1">
+              <Link
+                href={`/profile/${user.username}`}
+                className="text-[11px] text-white/25 hover:text-white/50 transition"
+              >
+                Edit profile
+              </Link>
+              <button
+                onClick={logout}
+                className="text-[11px] text-white/25 hover:text-white/50 transition"
+              >
+                Sign out
+              </button>
+            </div>
           </div>
         ) : (
           <Link

@@ -2,7 +2,6 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import HangboardTimer from "@/components/timer/HangboardTimer";
-import Link from "next/link";
 import type { WorkoutProtocol } from "@/types";
 
 function TimerPageInner() {
@@ -127,17 +126,7 @@ function TimerPageInner() {
 
   return (
     <div className="relative min-h-dvh">
-      {/* Back button (hidden during workout) */}
-      <Link
-        href="/dashboard"
-        className="absolute top-4 left-4 z-10 rounded-lg p-2 text-white/30 hover:text-white transition"
-        style={{ display: "block" }}
-      >
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-          <path d="M13 4l-6 6 6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        </svg>
-      </Link>
-      <HangboardTimer protocol={protocol} onComplete={handleComplete} />
+      <HangboardTimer protocol={protocol} onComplete={handleComplete} backHref="/dashboard" />
     </div>
   );
 }

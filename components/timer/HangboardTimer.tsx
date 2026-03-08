@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useTimer } from "@/lib/hooks/useTimer";
 import { formatTimerDisplay } from "@/lib/utils";
 import type { WorkoutProtocol } from "@/types";
@@ -7,9 +8,10 @@ import type { WorkoutProtocol } from "@/types";
 interface HangboardTimerProps {
   protocol: WorkoutProtocol;
   onComplete?: () => void;
+  backHref?: string;
 }
 
-export default function HangboardTimer({ protocol, onComplete }: HangboardTimerProps) {
+export default function HangboardTimer({ protocol, onComplete, backHref }: HangboardTimerProps) {
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [vibrationEnabled, setVibrationEnabled] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -53,7 +55,6 @@ export default function HangboardTimer({ protocol, onComplete }: HangboardTimerP
 
   const { phase, secondsLeft, currentRep, currentSet, totalReps, totalSets } = state;
 
-  // Color scheme
   const colors = {
     idle: { bg: "bg-[#0a0a0a]", text: "text-white", label: "READY", labelColor: "text-white/40" },
     hang: { bg: "bg-[#0d1f14]", text: "text-brand-400", label: "HANG", labelColor: "text-brand-400" },
@@ -64,7 +65,6 @@ export default function HangboardTimer({ protocol, onComplete }: HangboardTimerP
 
   const c = colors[phase];
 
-  // Progress bar
   const totalTime =
     phase === "hang"
       ? protocol.hangTime
@@ -75,47 +75,64 @@ export default function HangboardTimer({ protocol, onComplete }: HangboardTimerP
       : 1;
   const progress = phase === "idle" || phase === "complete" ? 0 : ((totalTime - secondsLeft) / totalTime) * 100;
 
-  // Countdown glow for last 3 seconds
   const isCountdown = secondsLeft <= 3 && secondsLeft > 0 && phase !== "idle" && phase !== "complete";
 
   return (
     <div className={`flex flex-col min-h-dvh ${c.bg} transition-colors duration-300`}>
       {/* Top bar */}
-      <div className="flex items-center justify-between p-4 md:p-6">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-widest text-white/30">
-            {protocol.name}
-          </p>
+      <div
+        className="flex items-center justify-between px-3 md:px-5"
+        style={{ paddingTop: `max(env(safe-area-inset-top), 0.75rem)` }}
+      >
+        <div className="flex items-center gap-2 py-2 min-w-0">
+          {backHref && (
+            <Link
+              href={backHref}
+              className="shrink-0 rounded-xl p-2 text-white/30 hover:text-white/70 transition active:scale-95"
+            >
+              <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
+                <path d="M13 4l-6 6 6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </Link>
+          )}
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-white leading-tight truncate max-w-[180px] md:max-w-xs">
+              {protocol.name}
+            </p>
+            <p className="text-[10px] font-medium uppercase tracking-widest text-white/30 mt-0.5">
+              {protocol.sets}×{protocol.reps} · {protocol.hangTime}s/{protocol.restTime}s
+            </p>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => setAudioEnabled((v) => !v)}
-            className={`rounded-lg p-2 transition ${audioEnabled ? "text-white/60" : "text-white/20"}`}
+            className={`rounded-xl p-2.5 transition ${audioEnabled ? "text-white/60 hover:text-white" : "text-white/20"}`}
             title="Toggle audio"
           >
             {audioEnabled ? (
-              <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                 <path d="M7 7H3v6h4l5 4V3L7 7z" fill="currentColor"/>
                 <path d="M15 7s2 1.5 2 3-2 3-2 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
             ) : (
-              <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-                <path d="M7 7H3v6h4l5 4V3L7 7z" fill="currentColor" opacity="0.4"/>
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M7 7H3v6h4l5 4V3L7 7z" fill="currentColor" opacity="0.3"/>
                 <path d="M14 14l4-4M18 14l-4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
             )}
           </button>
           <button
             onClick={toggleFullscreen}
-            className="rounded-lg p-2 text-white/60 transition hover:text-white"
+            className="rounded-xl p-2.5 text-white/60 transition hover:text-white"
             title="Toggle fullscreen"
           >
             {isFullscreen ? (
-              <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                 <path d="M7 3v4H3M17 3l-4 4M7 17v-4H3M17 17l-4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
             ) : (
-              <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                 <path d="M3 7V3h4M17 3h-4v4M3 13v4h4M17 17h-4v-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
             )}
@@ -136,22 +153,18 @@ export default function HangboardTimer({ protocol, onComplete }: HangboardTimerP
       </div>
 
       {/* Main timer display */}
-      <div className="flex flex-1 flex-col items-center justify-center gap-6 px-8">
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6">
         {/* Phase label */}
-        <div className="text-center">
-          <span
-            className={`timer-display text-sm font-bold uppercase tracking-[0.3em] ${c.labelColor} transition-colors`}
-          >
-            {c.label}
-          </span>
-        </div>
+        <span className={`text-sm font-bold uppercase tracking-[0.3em] ${c.labelColor} transition-colors`}>
+          {c.label}
+        </span>
 
         {/* Time display */}
         <div
-          className={`timer-display transition-all ${c.text} ${
+          className={`font-mono font-black tabular-nums transition-all ${c.text} ${
             isCountdown ? "scale-110" : "scale-100"
           }`}
-          style={{ fontSize: "clamp(5rem, 25vw, 14rem)", lineHeight: 1, transition: "transform 0.1s" }}
+          style={{ fontSize: "clamp(4.5rem, 22vw, 13rem)", lineHeight: 1, transition: "transform 0.1s" }}
         >
           {phase === "complete" ? (
             <span className="text-brand-400">✓</span>
@@ -163,16 +176,16 @@ export default function HangboardTimer({ protocol, onComplete }: HangboardTimerP
         {/* Rep / Set counter */}
         <div className="flex items-center gap-8 text-center">
           <div>
-            <p className="text-xs uppercase tracking-widest text-white/30 mb-1">Rep</p>
-            <p className="timer-display text-2xl font-bold text-white">
+            <p className="text-[10px] uppercase tracking-widest text-white/30 mb-1">Rep</p>
+            <p className="text-2xl font-bold text-white tabular-nums">
               {phase === "complete" ? totalReps : currentRep}
               <span className="text-white/30">/{totalReps}</span>
             </p>
           </div>
           <div className="h-8 w-px bg-white/10" />
           <div>
-            <p className="text-xs uppercase tracking-widest text-white/30 mb-1">Set</p>
-            <p className="timer-display text-2xl font-bold text-white">
+            <p className="text-[10px] uppercase tracking-widest text-white/30 mb-1">Set</p>
+            <p className="text-2xl font-bold text-white tabular-nums">
               {phase === "complete" ? totalSets : currentSet}
               <span className="text-white/30">/{totalSets}</span>
             </p>
@@ -180,42 +193,43 @@ export default function HangboardTimer({ protocol, onComplete }: HangboardTimerP
         </div>
 
         {/* Rep dots */}
-        <div className="flex items-center gap-2">
-          {Array.from({ length: totalReps }).map((_, i) => {
-            const done =
-              phase === "complete" ||
-              (currentRep > i + 1) ||
-              (currentRep === i + 1 && phase === "rest") ||
-              (currentRep === i + 1 && phase === "rest_between_sets");
-            const active = currentRep === i + 1 && phase === "hang";
-            return (
-              <div
-                key={i}
-                className={`h-2 w-2 rounded-full transition-all ${
-                  done
-                    ? "bg-brand-500"
-                    : active
-                    ? "bg-white scale-125"
-                    : "bg-white/20"
-                }`}
-              />
-            );
-          })}
-        </div>
+        {totalReps <= 12 && (
+          <div className="flex items-center gap-2 flex-wrap justify-center max-w-xs">
+            {Array.from({ length: totalReps }).map((_, i) => {
+              const done =
+                phase === "complete" ||
+                currentRep > i + 1 ||
+                (currentRep === i + 1 && phase === "rest") ||
+                (currentRep === i + 1 && phase === "rest_between_sets");
+              const active = currentRep === i + 1 && phase === "hang";
+              return (
+                <div
+                  key={i}
+                  className={`h-2.5 w-2.5 rounded-full transition-all ${
+                    done ? "bg-brand-500" : active ? "bg-white scale-125" : "bg-white/20"
+                  }`}
+                />
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Controls */}
-      <div className="flex flex-col items-center gap-4 px-8 pb-10 md:pb-16">
-        <div className="flex items-center gap-4">
+      <div
+        className="flex flex-col items-center gap-4 px-6 pb-8"
+        style={{ paddingBottom: `max(env(safe-area-inset-bottom) + 1rem, 2rem)` }}
+      >
+        <div className="flex items-center gap-4 w-full max-w-xs">
           <button
             onClick={reset}
-            className="rounded-xl border border-white/10 bg-white/5 px-6 py-3 text-sm font-medium text-white/60 transition hover:bg-white/10 hover:text-white active:scale-95"
+            className="flex-1 rounded-2xl border border-white/10 bg-white/5 py-4 text-sm font-semibold text-white/60 transition hover:bg-white/10 hover:text-white active:scale-95"
           >
             Reset
           </button>
           <button
             onClick={toggle}
-            className={`rounded-xl px-10 py-4 text-lg font-bold transition active:scale-95 ${
+            className={`flex-[2] rounded-2xl py-4 text-lg font-bold transition active:scale-95 ${
               phase === "complete"
                 ? "bg-brand-500/20 text-brand-400 border border-brand-500/30"
                 : phase !== "idle"
@@ -226,7 +240,7 @@ export default function HangboardTimer({ protocol, onComplete }: HangboardTimerP
             {phase === "idle" ? "Start" : phase === "complete" ? "Done" : "Pause"}
           </button>
         </div>
-        <p className="text-xs text-white/20">Press Space to start/pause</p>
+        <p className="text-[10px] text-white/20">Press Space to start / pause</p>
       </div>
     </div>
   );
