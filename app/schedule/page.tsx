@@ -103,6 +103,13 @@ export default function CalendarPage() {
   const [showSubscribe, setShowSubscribe] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
 
+  // Import from iCal URL
+  const [showImport, setShowImport] = useState(false);
+  const [importUrl, setImportUrl] = useState("");
+  const [importTeam, setImportTeam] = useState("all");
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<{ imported: number; skipped: number } | null>(null);
+
   // New practice modal
   const [showNew, setShowNew] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -198,6 +205,13 @@ export default function CalendarPage() {
             <p className="mt-1 text-sm text-white/40">Upcoming practices</p>
           </div>
           <div className="flex gap-2 shrink-0">
+            <button onClick={() => { setShowImport(true); setImportResult(null); setImportUrl(""); setImportTeam(filterTeam !== "all" ? filterTeam : "2"); }}
+              className="btn-ghost text-sm flex items-center gap-1.5">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M7 1v8M4 6l3 3 3-3M2 11h10" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Import
+            </button>
             <button onClick={() => setShowSubscribe(true)}
               className="btn-ghost text-sm flex items-center gap-1.5">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -248,6 +262,74 @@ export default function CalendarPage() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Import Modal */}
+        {showImport && (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm px-4 pb-4 sm:pb-0"
+            onClick={(e) => { if (e.target === e.currentTarget && !importing) setShowImport(false); }}>
+            <div className="w-full max-w-md rounded-2xl border border-white/[0.08] bg-[#111] p-5 shadow-xl">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base font-semibold text-white">Import from iCal</h2>
+                <button onClick={() => setShowImport(false)} disabled={importing} className="text-white/40 hover:text-white">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                </button>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <label className="label">iCal URL</label>
+                  <input type="url" className="input font-mono text-xs" placeholder="https://calendar.google.com/calendar/ical/..."
+                    value={importUrl} onChange={(e) => setImportUrl(e.target.value)} disabled={importing} />
+                  <p className="mt-1 text-xs text-white/30">Paste a public .ics / iCal link. Practices up to 1 year out will be imported.</p>
+                </div>
+                <div>
+                  <label className="label">Assign to Team</label>
+                  <select className="input" value={importTeam} onChange={(e) => setImportTeam(e.target.value)} disabled={importing}>
+                    <option value="all">No specific team</option>
+                    {[1, 2, 3, 4].map((t) => <option key={t} value={t}>Comp Team {t}</option>)}
+                  </select>
+                </div>
+                {importResult && (
+                  <div className="rounded-xl border border-green-500/20 bg-green-500/10 px-4 py-3 text-sm text-green-400">
+                    ✓ Imported {importResult.imported} practice{importResult.imported !== 1 ? "s" : ""}
+                    {importResult.skipped > 0 && <span className="text-white/40"> · {importResult.skipped} skipped (already exist or out of range)</span>}
+                  </div>
+                )}
+              </div>
+              <div className="flex gap-3 mt-4">
+                <button
+                  disabled={importing || !importUrl.trim()}
+                  onClick={async () => {
+                    setImporting(true);
+                    setImportResult(null);
+                    try {
+                      const res = await fetch("/api/calendar/import", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          url: importUrl.trim(),
+                          compTeam: importTeam !== "all" ? parseInt(importTeam) : null,
+                        }),
+                      });
+                      const d = await res.json();
+                      if (d.success) {
+                        setImportResult({ imported: d.imported, skipped: d.skipped });
+                        const updated = await fetch(`/api/practices?team=${filterTeam}`).then((r) => r.json());
+                        setPractices(updated.practices || []);
+                      }
+                    } finally {
+                      setImporting(false);
+                    }
+                  }}
+                  className="btn-primary flex-1">
+                  {importing ? "Importing..." : "Import Practices"}
+                </button>
+                <button onClick={() => setShowImport(false)} disabled={importing} className="btn-ghost px-4">Cancel</button>
+              </div>
+            </div>
           </div>
         )}
 
