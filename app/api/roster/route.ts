@@ -82,6 +82,21 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ success: true, created, skipped });
 }
 
+export async function DELETE(req: NextRequest) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await requireCoach(session))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  const db = getDb();
+  // Delete all users except the currently logged-in user
+  const result = await db.execute({
+    sql: `DELETE FROM users WHERE id != ?`,
+    args: [session.userId],
+  });
+
+  return NextResponse.json({ success: true, deleted: Number(result.rowsAffected) });
+}
+
 export async function PATCH(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

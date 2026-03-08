@@ -93,7 +93,7 @@ export default function PlanDetailPage() {
         <div className="flex flex-wrap items-center gap-2 mb-2">
           {plan.is_certified && (
             <span className="badge bg-brand-500/10 text-brand-400 border border-brand-500/20">
-              ✓ Open Coach Certified
+              ✓ Session Certified
             </span>
           )}
           {cat && (

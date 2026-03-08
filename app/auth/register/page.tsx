@@ -143,7 +143,7 @@ export default function RegisterPage() {
           </p>
 
           <p className="text-center text-xs text-white/20 leading-relaxed">
-            Open Coach is free and always will be. No credit card required.
+            Session is free and always will be. No credit card required.
           </p>
         </form>
       </div>

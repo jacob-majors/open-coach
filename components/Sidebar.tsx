@@ -182,9 +182,8 @@ export default function Sidebar() {
           </div>
           <div>
             <p className="text-sm font-bold text-white leading-none group-hover:text-brand-400 transition">
-              Open Coach
+              Session
             </p>
-            <p className="text-[10px] text-white/30 mt-0.5">by Jacob Majors</p>
           </div>
         </Link>
       </div>

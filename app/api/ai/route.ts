@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
   const test = latestTest.rows[0];
   const assess = assessment.rows[0];
 
-  const systemPrompt = `You are an expert climbing coach and sports scientist working with a climber through Open Coach, a free climbing training platform.
+  const systemPrompt = `You are an expert climbing coach and sports scientist working with a climber through Session, a climbing training platform.
 
 CLIMBER PROFILE:
 - Name: ${u?.display_name || session.username}

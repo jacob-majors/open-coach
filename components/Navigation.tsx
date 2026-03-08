@@ -30,7 +30,7 @@ export default function Navigation() {
             </svg>
           </div>
           <span className="text-sm font-bold tracking-tight text-white group-hover:text-brand-400 transition">
-            Open Coach
+            Session
           </span>
         </Link>
 

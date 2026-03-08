@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
     args: team && team !== "all" ? [fromStr, parseInt(team)] : [fromStr],
   });
 
-  const feedTitle = team && team !== "all" ? `Open Coach · Team ${team} Practices` : "Open Coach · All Practices";
+  const feedTitle = team && team !== "all" ? `Session · Team ${team} Practices` : "Session · All Practices";
 
   const items = result.rows.map((p) => {
     const descParts: string[] = [];

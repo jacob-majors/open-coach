@@ -4,10 +4,9 @@ import Sidebar from "@/components/Sidebar";
 import MobileNav from "@/components/MobileNav";
 
 export const metadata: Metadata = {
-  title: "Open Coach — Free Climbing Training Platform",
+  title: "Session — Climbing Training Platform",
   description:
-    "A free, open climbing training platform with structured workouts, finger strength tracking, and personalized training plans.",
-  authors: [{ name: "Jacob Majors" }],
+    "A climbing training platform with structured workouts, finger strength tracking, and personalized training plans.",
   keywords: ["climbing", "training", "hangboard", "finger strength", "bouldering", "sport climbing"],
 };
 

@@ -43,7 +43,7 @@ export default function LoginPage() {
               <path d="M12 3L21 18H3L12 3Z" fill="black"/>
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-white">Open Coach</h1>
+          <h1 className="text-2xl font-bold text-white">Session</h1>
           <p className="mt-1 text-sm text-white/40">Free climbing training, forever</p>
         </div>
 

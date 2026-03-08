@@ -38,27 +38,35 @@ function parseTeamNumber(val: string): number | null {
 }
 
 function parseCsv(text: string) {
-  // Normalize line endings and split
   const lines = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim().split("\n").filter(Boolean);
   const athletes: Array<{ name: string; email: string; bio?: string; compTeam?: number | null }> = [];
   const coaches: Array<{ name: string; email: string; bio?: string }> = [];
 
-  // Detect delimiter: tab or comma
   const firstLine = lines[0] || "";
   const delim = firstLine.includes("\t") ? "\t" : ",";
+
+  // Parse header to detect column layout
+  const header = firstLine.split(delim).map((s) => s.trim().toLowerCase().replace(/^"|"$/g, ""));
+  const hasLastName = header.some((h) => h === "last name" || h === "lastname");
 
   let idx = 0;
   for (const line of lines) {
     const cols = line.split(delim).map((s) => s.trim().replace(/^"|"$/g, ""));
-    const [firstName, lastName, bio, role, team] = cols;
-    if (!firstName) continue;
-    // Skip header rows
-    if (firstName.toLowerCase() === "first name" || firstName.toLowerCase() === "firstname") continue;
+    const first = cols[0];
+    if (!first) continue;
+    if (first.toLowerCase() === "first name" || first.toLowerCase() === "firstname") continue;
+
+    let firstName: string, lastName: string, bio: string, role: string, team: string;
+    if (hasLastName) {
+      [firstName, lastName, bio, role, team] = cols;
+    } else {
+      [firstName, bio, role, team] = cols;
+      lastName = "";
+    }
 
     const fullName = [firstName, lastName].filter(Boolean).join(" ");
-    // Generate a unique placeholder email using index to avoid collisions
     const nameSlug = `${firstName.toLowerCase()}${lastName ? lastName.toLowerCase() : ""}`.replace(/[^a-z0-9]/g, "");
-    const email = `${nameSlug || "user"}${idx}@opencoach.placeholder`;
+    const email = `${nameSlug || "user"}${idx}@session.placeholder`;
     idx++;
 
     const isCoachRole = role?.toLowerCase().trim().includes("coach");
@@ -94,6 +102,10 @@ export default function RosterPage() {
 
   // Coach bio modal
   const [selectedCoach, setSelectedCoach] = useState<RosterUser | null>(null);
+
+  // Clear roster
+  const [showClear, setShowClear] = useState(false);
+  const [clearing, setClearing] = useState(false);
 
   useEffect(() => {
     if (loading) return;
@@ -219,11 +231,17 @@ export default function RosterPage() {
           <h1 className="text-2xl font-bold text-white">Roster</h1>
           <p className="mt-1 text-sm text-white/40">{athleteList.length} athletes · {coachList.length} coaches</p>
         </div>
-        <button
-          onClick={() => { setShowAdd(true); setAddResult(null); setAddForm({ name: "", email: "", compTeam: "", bio: "" }); setCsvText(""); }}
-          className="btn-primary text-sm shrink-0">
-          + Add
-        </button>
+        <div className="flex gap-2 shrink-0">
+          <button onClick={() => setShowClear(true)}
+            className="btn-ghost text-sm text-red-400/70 hover:text-red-400">
+            Clear All
+          </button>
+          <button
+            onClick={() => { setShowAdd(true); setAddResult(null); setAddForm({ name: "", email: "", compTeam: "", bio: "" }); setCsvText(""); }}
+            className="btn-primary text-sm">
+            + Add
+          </button>
+        </div>
       </div>
 
       {/* Coaches section */}
@@ -242,7 +260,6 @@ export default function RosterPage() {
                     <p className="text-sm font-semibold text-white group-hover:text-brand-400 transition truncate">
                       {coach.display_name || coach.username}
                     </p>
-                    <p className="text-xs text-white/30 truncate">@{coach.username}</p>
                   </div>
                   <span className="text-[10px] text-brand-400/60 shrink-0">Coach</span>
                 </div>
@@ -306,7 +323,6 @@ export default function RosterPage() {
                       className="text-sm font-semibold text-white hover:text-brand-400 transition">
                       {athlete.display_name || athlete.username}
                     </Link>
-                    <span className="text-xs text-white/30">@{athlete.username}</span>
                     {athlete.max_boulder_grade && (
                       <span className="text-xs font-bold text-brand-400">{athlete.max_boulder_grade}</span>
                     )}
@@ -350,7 +366,6 @@ export default function RosterPage() {
                 </div>
                 <div>
                   <p className="text-base font-semibold text-white">{selectedCoach.display_name || selectedCoach.username}</p>
-                  <p className="text-xs text-white/40">@{selectedCoach.username}</p>
                 </div>
               </div>
               <button onClick={() => setSelectedCoach(null)} className="text-white/40 hover:text-white transition">
@@ -375,6 +390,34 @@ export default function RosterPage() {
                 onClick={() => setSelectedCoach(null)}>
                 View Full Profile
               </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Clear Roster Confirm */}
+      {showClear && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="w-full max-w-sm rounded-2xl border border-white/[0.08] bg-[#111] p-5 shadow-xl">
+            <h2 className="text-base font-semibold text-white mb-2">Clear Entire Roster?</h2>
+            <p className="text-sm text-white/50 mb-5">
+              This will permanently delete all athletes and coaches. Your own account will be kept. This cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                disabled={clearing}
+                onClick={async () => {
+                  setClearing(true);
+                  await fetch("/api/roster", { method: "DELETE" });
+                  const d = await fetch("/api/roster").then((r) => r.json());
+                  setAthletes(d.athletes || []);
+                  setShowClear(false);
+                  setClearing(false);
+                }}
+                className="flex-1 rounded-lg border border-red-500/30 bg-red-500/10 py-2.5 text-sm text-red-400 hover:bg-red-500/20 transition">
+                {clearing ? "Clearing..." : "Clear All"}
+              </button>
+              <button onClick={() => setShowClear(false)} className="btn-ghost px-4 text-sm">Cancel</button>
             </div>
           </div>
         </div>

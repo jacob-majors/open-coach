@@ -251,7 +251,7 @@ export default function CommunityPage() {
               {feedData.athletes && feedData.athletes.length > 0 && (
                 <div className="mt-6">
                   <h2 className="text-sm font-semibold text-white/60 mb-3 uppercase tracking-wider text-xs">
-                    Athletes on Open Coach
+                    Athletes on Session
                   </h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {feedData.athletes.map((a) => (

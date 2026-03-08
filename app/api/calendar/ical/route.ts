@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
     args: team && team !== "all" ? [fromStr, parseInt(team)] : [fromStr],
   });
 
-  const calName = team && team !== "all" ? `Open Coach · Team ${team}` : "Open Coach · All Practices";
+  const calName = team && team !== "all" ? `Session · Team ${team}` : "Session · All Practices";
   const now = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
 
   const events = result.rows.map((p) => {
@@ -81,7 +81,7 @@ export async function GET(req: NextRequest) {
   const ical = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Open Coach//Practice Calendar//EN",
+    "PRODID:-//Session//Practice Calendar//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     `X-WR-CALNAME:${calName}`,
