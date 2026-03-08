@@ -51,10 +51,20 @@ interface DashboardData {
   benchmarks: Record<string, number>;
 }
 
+interface CoachStats {
+  totalAthletes: number;
+  byTeam: Record<number, number>;
+  sessionsWithPlan: number;
+}
+
 export default function DashboardPage() {
   const { user: authUser, loading: authLoading } = useAuth();
+  const isCoach = authUser?.role === "coach" || authUser?.role === "admin";
+
   const [data, setData] = useState<DashboardData | null>(null);
+  const [coachStats, setCoachStats] = useState<CoachStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTeam, setActiveTeam] = useState<number | null>(null);
 
   useEffect(() => {
     if (!authLoading && !authUser) {
@@ -62,12 +72,19 @@ export default function DashboardPage() {
       return;
     }
     if (!authLoading && authUser) {
-      fetch("/api/dashboard")
-        .then((r) => r.json())
-        .then(setData)
-        .finally(() => setLoading(false));
+      if (isCoach) {
+        fetch("/api/coach/stats")
+          .then((r) => r.json())
+          .then(setCoachStats)
+          .finally(() => setLoading(false));
+      } else {
+        fetch("/api/dashboard")
+          .then((r) => r.json())
+          .then(setData)
+          .finally(() => setLoading(false));
+      }
     }
-  }, [authUser, authLoading]);
+  }, [authUser, authLoading, isCoach]);
 
   if (authLoading || loading) {
     return (
@@ -78,6 +95,10 @@ export default function DashboardPage() {
   }
 
   if (!authUser) return null;
+
+  if (isCoach) {
+    return <CoachDashboard authUser={authUser} stats={coachStats} activeTeam={activeTeam} setActiveTeam={setActiveTeam} />;
+  }
 
   const { todaysWorkout, recentLogs, latestTest, testHistory, recentSends, benchmarks } = data || {};
 
@@ -105,25 +126,25 @@ export default function DashboardPage() {
           label="Max Hang"
           value={latestTest ? `${Math.round(latestTest.percent_bodyweight)}%` : "—"}
           sub={latestTest ? "of bodyweight" : "No tests yet"}
-          href="/test"
+          href="/training"
         />
         <StatCard
           label="Best Boulder"
           value={data?.user?.max_boulder_grade || "—"}
           sub={data?.user?.target_boulder_grade ? `Goal: ${data.user.target_boulder_grade}` : "Set in profile"}
-          href="/profile"
+          href={`/profile/${authUser.username}`}
         />
         <StatCard
           label="Max Pull-ups"
           value={benchmarks?.max_pullups != null ? String(Math.round(benchmarks.max_pullups)) : "—"}
           sub="reps"
-          href="/log"
+          href="/training"
         />
         <StatCard
           label="Sends Logged"
           value={recentSends != null ? String(recentSends.length > 0 ? recentSends.length : 0) : "—"}
           sub="recent climbs"
-          href="/log"
+          href="/training"
         />
       </div>
 
@@ -161,8 +182,8 @@ export default function DashboardPage() {
               <Link href="/plans" className="btn-ghost text-center text-xs py-2">
                 Browse Plans
               </Link>
-              <Link href="/test" className="btn-ghost text-center text-xs py-2">
-                Hang Test
+              <Link href="/training" className="btn-ghost text-center text-xs py-2">
+                Training Log
               </Link>
             </div>
           </div>
@@ -174,7 +195,7 @@ export default function DashboardPage() {
             <div className="card">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-white">Hangboard Progress</h2>
-                <Link href="/test" className="text-xs text-brand-400 hover:underline">
+                <Link href="/training" className="text-xs text-brand-400 hover:underline">
                   View all →
                 </Link>
               </div>
@@ -189,7 +210,7 @@ export default function DashboardPage() {
             <div className="card h-full">
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-white">Benchmarks</h2>
-                <Link href="/log" className="text-xs text-brand-400 hover:underline">
+                <Link href="/training" className="text-xs text-brand-400 hover:underline">
                   Log →
                 </Link>
               </div>
@@ -216,7 +237,7 @@ export default function DashboardPage() {
           <div className="card">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-sm font-semibold text-white">Recent Sends</h2>
-              <Link href="/log" className="text-xs text-brand-400 hover:underline">
+              <Link href="/training" className="text-xs text-brand-400 hover:underline">
                 Log send →
               </Link>
             </div>
@@ -252,7 +273,7 @@ export default function DashboardPage() {
             ) : (
               <div className="py-6 text-center">
                 <p className="text-sm text-white/40">No sends logged yet</p>
-                <Link href="/log" className="mt-3 inline-block btn-primary text-xs py-2 px-4">
+                <Link href="/training" className="mt-3 inline-block btn-primary text-xs py-2 px-4">
                   Log a send
                 </Link>
               </div>
@@ -265,7 +286,7 @@ export default function DashboardPage() {
           <div className="card">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-sm font-semibold text-white">Recent Workouts</h2>
-              <Link href="/log" className="text-xs text-brand-400 hover:underline">
+              <Link href="/training" className="text-xs text-brand-400 hover:underline">
                 View all →
               </Link>
             </div>
@@ -311,7 +332,7 @@ export default function DashboardPage() {
             ) : (
               <div className="py-6 text-center">
                 <p className="text-sm text-white/40">No workouts logged yet</p>
-                <Link href="/log" className="mt-3 inline-block btn-primary text-xs py-2 px-4">
+                <Link href="/training" className="mt-3 inline-block btn-primary text-xs py-2 px-4">
                   Log a workout
                 </Link>
               </div>
@@ -323,16 +344,147 @@ export default function DashboardPage() {
   );
 }
 
-function StatCard({
-  label,
-  value,
-  sub,
-  href,
+// ── Coach Dashboard ────────────────────────────────────────────────────────────
+
+const TEAM_COLORS: Record<number, { pill: string; card: string }> = {
+  1: { pill: "bg-red-500/15 text-red-400 border-red-500/25", card: "border-red-500/20" },
+  2: { pill: "bg-blue-500/15 text-blue-400 border-blue-500/25", card: "border-blue-500/20" },
+  3: { pill: "bg-yellow-500/15 text-yellow-400 border-yellow-500/25", card: "border-yellow-500/20" },
+  4: { pill: "bg-purple-500/15 text-purple-400 border-purple-500/25", card: "border-purple-500/20" },
+};
+
+function CoachDashboard({
+  authUser,
+  stats,
+  activeTeam,
+  setActiveTeam,
 }: {
-  label: string;
-  value: string;
-  sub: string;
-  href: string;
+  authUser: { username: string };
+  stats: CoachStats | null;
+  activeTeam: number | null;
+  setActiveTeam: (t: number | null) => void;
+}) {
+  const byTeam = stats?.byTeam ?? { 1: 0, 2: 0, 3: 0, 4: 0 };
+
+  return (
+    <div className="mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-8">
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-white">Coach Dashboard</h1>
+        <p className="mt-1 text-sm text-white/40">
+          {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+        </p>
+      </div>
+
+      {/* Team stat cards */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-6">
+        <div className="card">
+          <p className="text-[10px] font-medium uppercase tracking-wider text-white/40 mb-1">Total Athletes</p>
+          <p className="text-3xl font-bold text-white">{stats?.totalAthletes ?? "—"}</p>
+          <p className="text-xs text-white/30 mt-0.5">on roster</p>
+        </div>
+        {[1, 2, 3].map((t) => (
+          <button
+            key={t}
+            onClick={() => setActiveTeam(activeTeam === t ? null : t)}
+            className={`card text-left transition hover:border-white/15 ${
+              activeTeam === t ? `${TEAM_COLORS[t].card} bg-white/[0.03]` : ""
+            }`}
+          >
+            <p className="text-[10px] font-medium uppercase tracking-wider text-white/40 mb-1">Comp Team {t}</p>
+            <p className="text-3xl font-bold text-white">{byTeam[t] ?? 0}</p>
+            <p className="text-xs text-white/30 mt-0.5">athletes</p>
+          </button>
+        ))}
+      </div>
+
+      {/* Second row stats */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 mb-8">
+        <div className="card">
+          <p className="text-[10px] font-medium uppercase tracking-wider text-white/40 mb-1">Sessions w/ Plan</p>
+          <p className="text-3xl font-bold text-white">{stats?.sessionsWithPlan ?? "—"}</p>
+          <p className="text-xs text-white/30 mt-0.5">have a practice plan</p>
+        </div>
+        <div className="card">
+          <p className="text-[10px] font-medium uppercase tracking-wider text-white/40 mb-1">Comp Team 4</p>
+          <p className="text-3xl font-bold text-white">{byTeam[4] ?? 0}</p>
+          <p className="text-xs text-white/30 mt-0.5">athletes</p>
+        </div>
+        <div className="card">
+          <p className="text-[10px] font-medium uppercase tracking-wider text-white/40 mb-1">Unassigned</p>
+          <p className="text-3xl font-bold text-white">
+            {stats ? Math.max(0, (stats.totalAthletes as number) - Object.values(byTeam).reduce((a, b) => a + b, 0)) : "—"}
+          </p>
+          <p className="text-xs text-white/30 mt-0.5">no team yet</p>
+        </div>
+      </div>
+
+      {/* Active team filter indicator */}
+      {activeTeam && (
+        <div className={`mb-4 flex items-center gap-2 rounded-xl border px-4 py-2.5 ${TEAM_COLORS[activeTeam].card} bg-white/[0.02]`}>
+          <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold border ${TEAM_COLORS[activeTeam].pill}`}>
+            Comp Team {activeTeam}
+          </span>
+          <span className="text-sm text-white/60">selected — viewing team filter on Roster</span>
+          <Link href={`/roster?team=${activeTeam}`} className="ml-auto text-xs text-brand-400 hover:underline shrink-0">
+            View Roster →
+          </Link>
+        </div>
+      )}
+
+      {/* Quick actions */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Link href="/roster" className="card hover:border-brand-500/20 transition group block">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500/10">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                <circle cx="7" cy="6" r="3" stroke="#22c55e" strokeWidth="1.5"/>
+                <circle cx="14" cy="6" r="2.5" stroke="#22c55e" strokeWidth="1.5"/>
+                <path d="M1 17c0-2.761 2.686-5 6-5s6 2.239 6 5" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round"/>
+                <path d="M14 10.5c1.657 0 3 1.343 3 3" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            </div>
+            <h3 className="text-sm font-semibold text-white group-hover:text-brand-400 transition">Roster</h3>
+          </div>
+          <p className="text-xs text-white/40">Assign athletes to comp teams, view all climbers</p>
+        </Link>
+
+        <Link href="/schedule" className="card hover:border-brand-500/20 transition group block">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500/10">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                <rect x="3" y="4" width="14" height="13" rx="2" stroke="#22c55e" strokeWidth="1.5"/>
+                <path d="M7 2v3M13 2v3M3 8h14" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            </div>
+            <h3 className="text-sm font-semibold text-white group-hover:text-brand-400 transition">Calendar</h3>
+          </div>
+          <p className="text-xs text-white/40">View and plan practice sessions for each team</p>
+        </Link>
+
+        <Link href="/team" className="card hover:border-brand-500/20 transition group block">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500/10">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                <rect x="2" y="4" width="11" height="9" rx="2" stroke="#22c55e" strokeWidth="1.5"/>
+                <path d="M13 8l5-3v10l-5-3" stroke="#22c55e" strokeWidth="1.5" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <h3 className="text-sm font-semibold text-white group-hover:text-brand-400 transition">Coach Aid</h3>
+          </div>
+          <p className="text-xs text-white/40">Build session practice plans and drills</p>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+// ── Shared components ──────────────────────────────────────────────────────────
+
+function StatCard({
+  label, value, sub, href,
+}: {
+  label: string; value: string; sub: string; href: string;
 }) {
   return (
     <Link href={href} className="card hover:border-brand-500/20 transition group block">
@@ -375,9 +527,7 @@ function HangboardChart({
     .map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`)
     .join(" ");
 
-  const areaD =
-    pathD +
-    ` L${W},${H} L0,${H} Z`;
+  const areaD = pathD + ` L${W},${H} L0,${H} Z`;
 
   const latest = vals[vals.length - 1];
   const first = vals[0];

@@ -9,7 +9,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ user
 
   const userResult = await db.execute({
     sql: `SELECT id, username, display_name, bio, bodyweight_lbs, max_rope_grade, max_boulder_grade,
-            target_rope_grade, target_boulder_grade, avatar_url, created_at
+            target_rope_grade, target_boulder_grade, avatar_url, role, created_at
           FROM users WHERE username = ?`,
     args: [username.toLowerCase()],
   });
@@ -80,6 +80,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ us
     displayName, bio, bodyweightLbs,
     maxRopeGrade, maxBoulderGrade,
     targetRopeGrade, targetBoulderGrade,
+    role,
   } = body;
 
   const db = getDb();
@@ -91,7 +92,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ us
             max_rope_grade = COALESCE(?, max_rope_grade),
             max_boulder_grade = COALESCE(?, max_boulder_grade),
             target_rope_grade = COALESCE(?, target_rope_grade),
-            target_boulder_grade = COALESCE(?, target_boulder_grade)
+            target_boulder_grade = COALESCE(?, target_boulder_grade),
+            role = CASE WHEN ? IS NOT NULL THEN ? ELSE role END
           WHERE id = ?`,
     args: [
       displayName || null,
@@ -101,6 +103,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ us
       maxBoulderGrade || null,
       targetRopeGrade || null,
       targetBoulderGrade || null,
+      role || null,
+      role || null,
       session.userId,
     ],
   });

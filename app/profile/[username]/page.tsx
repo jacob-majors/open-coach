@@ -17,6 +17,7 @@ interface ProfileData {
     max_boulder_grade: string | null;
     target_rope_grade: string | null;
     target_boulder_grade: string | null;
+    role: string | null;
     created_at: string;
   };
   recentLogs: Array<{ workout_name: string; protocol_type: string; rpe: number; completed_at: string }>;
@@ -43,7 +44,9 @@ export default function ProfilePage() {
     displayName: "", bio: "", bodyweightLbs: "",
     maxBoulderGrade: "", targetBoulderGrade: "",
     maxRopeGrade: "", targetRopeGrade: "",
+    role: "athlete",
   });
+  const [switchingRole, setSwitchingRole] = useState(false);
 
   useEffect(() => {
     fetch(`/api/users/${username}`)
@@ -60,6 +63,7 @@ export default function ProfilePage() {
             targetBoulderGrade: d.user.target_boulder_grade || "",
             maxRopeGrade: d.user.max_rope_grade || "",
             targetRopeGrade: d.user.target_rope_grade || "",
+            role: d.user.role || "athlete",
           });
         }
         setLoading(false);
@@ -91,6 +95,7 @@ export default function ProfilePage() {
         targetBoulderGrade: editForm.targetBoulderGrade || null,
         maxRopeGrade: editForm.maxRopeGrade || null,
         targetRopeGrade: editForm.targetRopeGrade || null,
+        role: editForm.role,
       }),
     });
     setData((prev) => prev ? {
@@ -104,9 +109,24 @@ export default function ProfilePage() {
         target_boulder_grade: editForm.targetBoulderGrade || null,
         max_rope_grade: editForm.maxRopeGrade || null,
         target_rope_grade: editForm.targetRopeGrade || null,
+        role: editForm.role,
       },
     } : prev);
     setEditing(false);
+  };
+
+  const switchRole = async (newRole: string) => {
+    setSwitchingRole(true);
+    await fetch(`/api/users/${username}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: newRole }),
+    });
+    setData((prev) => prev ? { ...prev, user: { ...prev.user, role: newRole } } : prev);
+    setEditForm((f) => ({ ...f, role: newRole }));
+    setSwitchingRole(false);
+    // Reload page so auth session reflects new role
+    window.location.reload();
   };
 
   if (loading) return (
@@ -226,6 +246,29 @@ export default function ProfilePage() {
             {recentTests[0] && (
               <Stat label="Max Hang" value={`${Math.round(recentTests[0].percent_bodyweight)}% BW`} highlight />
             )}
+          </div>
+        )}
+
+        {/* Role switcher — only for own profile */}
+        {isOwnProfile && !editing && (
+          <div className="mt-4 border-t border-white/[0.06] pt-4">
+            <p className="text-[10px] uppercase tracking-wider text-white/30 mb-2">Account Type</p>
+            <div className="flex gap-2">
+              {["athlete", "coach"].map((r) => (
+                <button
+                  key={r}
+                  disabled={switchingRole || profileUser.role === r}
+                  onClick={() => switchRole(r)}
+                  className={`rounded-lg px-4 py-1.5 text-xs font-semibold capitalize transition ${
+                    profileUser.role === r || (!profileUser.role && r === "athlete")
+                      ? "bg-brand-500/15 text-brand-400 border border-brand-500/30"
+                      : "border border-white/10 bg-white/5 text-white/40 hover:text-white hover:bg-white/10"
+                  }`}
+                >
+                  {switchingRole && profileUser.role !== r ? "Switching..." : r}
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </div>

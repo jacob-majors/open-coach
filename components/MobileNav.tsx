@@ -3,65 +3,75 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/hooks/useAuth";
 
-const STATIC_NAV = [
-  {
-    href: "/dashboard",
-    label: "Today",
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
-        <path d="M10 2L18 9V18H13V13H7V18H2V9L10 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
-      </svg>
-    ),
-  },
-  {
-    href: "/log",
-    label: "Log",
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
-        <rect x="3" y="3" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-        <path d="M7 7h6M7 10h6M7 13h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        <circle cx="15" cy="13" r="2.5" fill="currentColor" opacity="0" stroke="currentColor" strokeWidth="0"/>
-      </svg>
-    ),
-  },
-  {
-    href: "/community",
-    label: "Community",
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
-        <circle cx="7" cy="6" r="3" stroke="currentColor" strokeWidth="1.5"/>
-        <circle cx="14" cy="6" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
-        <path d="M1 17c0-2.761 2.686-5 6-5s6 2.239 6 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        <path d="M14 10.5c1.657 0 3 1.343 3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      </svg>
-    ),
-  },
-  {
-    href: "/team",
-    label: "Coach",
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
-        <rect x="2" y="4" width="11" height="9" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-        <path d="M13 8l5-3v10l-5-3" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
-        <path d="M5 9h5M5 11h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      </svg>
-    ),
-  },
-];
-
 export default function MobileNav() {
   const pathname = usePathname();
   const { user } = useAuth();
 
   if (pathname?.startsWith("/timer")) return null;
 
+  const isCoach = user?.role === "coach" || user?.role === "admin";
   const profileHref = user ? `/profile/${user.username}` : "/auth/login";
   const profileActive = pathname?.startsWith("/profile");
+
+  const navItems = [
+    {
+      href: "/dashboard",
+      label: "Today",
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
+          <path d="M10 2L18 9V18H13V13H7V18H2V9L10 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+        </svg>
+      ),
+    },
+    {
+      href: "/schedule",
+      label: "Calendar",
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
+          <rect x="3" y="4" width="14" height="13" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M7 2v3M13 2v3M3 8h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+      ),
+    },
+    {
+      href: "/community",
+      label: "Community",
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
+          <circle cx="7" cy="6" r="3" stroke="currentColor" strokeWidth="1.5"/>
+          <circle cx="14" cy="6" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M1 17c0-2.761 2.686-5 6-5s6 2.239 6 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          <path d="M14 10.5c1.657 0 3 1.343 3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+      ),
+    },
+    isCoach
+      ? {
+          href: "/roster",
+          label: "Roster",
+          icon: (
+            <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
+              <rect x="3" y="3" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M7 7h6M7 10h6M7 13h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          ),
+        }
+      : {
+          href: "/training",
+          label: "Training",
+          icon: (
+            <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
+              <rect x="3" y="3" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M7 7h6M7 10h6M7 13h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          ),
+        },
+  ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden border-t border-white/[0.06] bg-[#0a0a0a]/95 backdrop-blur-xl">
       <div className="flex items-center justify-around px-1 pb-safe pt-1">
-        {STATIC_NAV.map(({ href, label, icon }) => {
+        {navItems.map(({ href, label, icon }) => {
           const active = pathname === href || pathname?.startsWith(href + "/");
           return (
             <Link

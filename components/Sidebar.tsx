@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { onAuthStateChange } from "@/lib/firebase";
 
-const NAV_ITEMS = [
+const ATHLETE_NAV = [
   {
     href: "/dashboard",
     label: "Dashboard",
@@ -20,7 +20,7 @@ const NAV_ITEMS = [
   },
   {
     href: "/schedule",
-    label: "Schedule",
+    label: "Calendar",
     icon: (a: boolean) => (
       <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
         <rect x="3" y="4" width="14" height="13" rx="2" stroke="currentColor" strokeWidth="1.5"
@@ -30,8 +30,8 @@ const NAV_ITEMS = [
     ),
   },
   {
-    href: "/plans",
-    label: "Plans",
+    href: "/training",
+    label: "Training",
     icon: (a: boolean) => (
       <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
         <rect x="3" y="3" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.5"
@@ -41,33 +41,13 @@ const NAV_ITEMS = [
     ),
   },
   {
-    href: "/test",
-    label: "Test",
-    icon: (_a: boolean) => (
-      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-        <path d="M10 17V10M6 14V12M14 14V8M2 17h16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      </svg>
-    ),
-  },
-  {
-    href: "/log",
-    label: "Log",
+    href: "/plans",
+    label: "Plans",
     icon: (a: boolean) => (
       <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-        <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.5"
-          fill={a ? "currentColor" : "none"} fillOpacity={a ? 0.1 : 0}/>
-        <path d="M10 7v3l2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      </svg>
-    ),
-  },
-  {
-    href: "/assessment",
-    label: "Assess",
-    icon: (a: boolean) => (
-      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-        <path d="M10 2a8 8 0 100 16A8 8 0 0010 2z" stroke="currentColor" strokeWidth="1.5"
-          fill={a ? "currentColor" : "none"} fillOpacity={a ? 0.1 : 0}/>
-        <path d="M7 10l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M4 4h12v2H4zM4 9h12v2H4zM4 14h7v2H4z" fill={a ? "currentColor" : "none"} fillOpacity={a ? 0.3 : 0}/>
+        <rect x="3" y="3" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+        <path d="M7 7h6M7 10h6M7 13h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
       </svg>
     ),
   },
@@ -85,8 +65,33 @@ const NAV_ITEMS = [
     ),
   },
   {
-    href: "/team",
-    label: "Coach Aid",
+    href: "/assessment",
+    label: "Assess",
+    icon: (a: boolean) => (
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <path d="M10 2a8 8 0 100 16A8 8 0 0010 2z" stroke="currentColor" strokeWidth="1.5"
+          fill={a ? "currentColor" : "none"} fillOpacity={a ? 0.1 : 0}/>
+        <path d="M7 10l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    ),
+  },
+];
+
+const COACH_NAV = [
+  {
+    href: "/dashboard",
+    label: "Dashboard",
+    icon: (a: boolean) => (
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <path d="M10 2L18 9V18H13V13H7V18H2V9L10 2Z"
+          stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"
+          fill={a ? "currentColor" : "none"} fillOpacity={a ? 0.15 : 0}/>
+      </svg>
+    ),
+  },
+  {
+    href: "/roster",
+    label: "Roster",
     icon: (a: boolean) => (
       <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
         <circle cx="7" cy="7" r="3" stroke="currentColor" strokeWidth="1.5"
@@ -94,6 +99,52 @@ const NAV_ITEMS = [
         <circle cx="14" cy="7" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
         <path d="M1 17c0-2.761 2.686-5 6-5s6 2.239 6 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
         <path d="M14 11c1.657 0 3 1.343 3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      </svg>
+    ),
+  },
+  {
+    href: "/schedule",
+    label: "Calendar",
+    icon: (a: boolean) => (
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <rect x="3" y="4" width="14" height="13" rx="2" stroke="currentColor" strokeWidth="1.5"
+          fill={a ? "currentColor" : "none"} fillOpacity={a ? 0.1 : 0}/>
+        <path d="M7 2v3M13 2v3M3 8h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      </svg>
+    ),
+  },
+  {
+    href: "/team",
+    label: "Coach Aid",
+    icon: (a: boolean) => (
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <rect x="2" y="4" width="11" height="9" rx="2" stroke="currentColor" strokeWidth="1.5"
+          fill={a ? "currentColor" : "none"} fillOpacity={a ? 0.1 : 0}/>
+        <path d="M13 8l5-3v10l-5-3" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+      </svg>
+    ),
+  },
+  {
+    href: "/community",
+    label: "Community",
+    icon: (a: boolean) => (
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <circle cx="7" cy="6" r="3" stroke="currentColor" strokeWidth="1.5"
+          fill={a ? "currentColor" : "none"} fillOpacity={a ? 0.15 : 0}/>
+        <circle cx="14" cy="6" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
+        <path d="M1 17c0-2.761 2.686-5 6-5s6 2.239 6 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <path d="M14 10.5c1.657 0 3 1.343 3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      </svg>
+    ),
+  },
+  {
+    href: "/plans",
+    label: "Plans",
+    icon: (a: boolean) => (
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <rect x="3" y="3" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.5"
+          fill={a ? "currentColor" : "none"} fillOpacity={a ? 0.1 : 0}/>
+        <path d="M7 7h6M7 10h6M7 13h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
       </svg>
     ),
   },
@@ -116,6 +167,9 @@ export default function Sidebar() {
 
   if (pathname?.startsWith("/timer")) return null;
 
+  const isCoach = user?.role === "coach" || user?.role === "admin";
+  const navItems = isCoach ? COACH_NAV : ATHLETE_NAV;
+
   return (
     <aside className="hidden md:flex flex-col w-56 shrink-0 border-r border-white/[0.06] bg-[#0d0d0d] sticky top-0 h-dvh overflow-y-auto">
       {/* Logo */}
@@ -135,9 +189,22 @@ export default function Sidebar() {
         </Link>
       </div>
 
+      {/* Role badge */}
+      {user && (
+        <div className="px-5 pb-3">
+          <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold border ${
+            isCoach
+              ? "bg-brand-500/10 text-brand-400 border-brand-500/20"
+              : "bg-white/[0.05] text-white/40 border-white/[0.08]"
+          }`}>
+            {isCoach ? "Coach" : "Athlete"}
+          </span>
+        </div>
+      )}
+
       {/* Nav */}
       <nav className="flex-1 px-3 space-y-0.5">
-        {NAV_ITEMS.map(({ href, label, icon }) => {
+        {navItems.map(({ href, label, icon }) => {
           const active = pathname === href || pathname?.startsWith(href + "/");
           return (
             <Link
