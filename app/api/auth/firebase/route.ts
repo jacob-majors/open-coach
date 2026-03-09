@@ -42,6 +42,12 @@ export async function POST(req: NextRequest) {
 
   const isAdmin = email === "jacobmajors2017@gmail.com";
 
+  // Pre-assigned team mappings (email -> comp_team)
+  const TEAM_ASSIGNMENTS: Record<string, number> = {
+    "riomacdonald20119@gmail.com": 1,
+  };
+  const preAssignedTeam = TEAM_ASSIGNMENTS[email] ?? null;
+
   if (user.rows.length === 0) {
     // New user — find a unique username
     let finalUsername = baseUsername || "climber";
@@ -55,9 +61,9 @@ export async function POST(req: NextRequest) {
 
     // Create with a placeholder password hash (OAuth users don't use password login)
     const result = await db.execute({
-      sql: `INSERT INTO users (username, email, password_hash, display_name, role, is_admin)
-            VALUES (?, ?, 'firebase-oauth', ?, ?, ?)`,
-      args: [finalUsername, email, displayName, isAdmin ? "admin" : "athlete", isAdmin ? 1 : 0],
+      sql: `INSERT INTO users (username, email, password_hash, display_name, role, is_admin, comp_team)
+            VALUES (?, ?, 'firebase-oauth', ?, ?, ?, ?)`,
+      args: [finalUsername, email, displayName, isAdmin ? "admin" : "athlete", isAdmin ? 1 : 0, preAssignedTeam],
     });
     userId = Number(result.lastInsertRowid);
     username = finalUsername;
@@ -69,6 +75,13 @@ export async function POST(req: NextRequest) {
       await db.execute({
         sql: `UPDATE users SET role = 'admin', is_admin = 1 WHERE id = ?`,
         args: [userId],
+      });
+    }
+    // Apply pre-assigned team if not already set
+    if (preAssignedTeam !== null) {
+      await db.execute({
+        sql: `UPDATE users SET comp_team = ?, role = 'athlete' WHERE id = ? AND (comp_team IS NULL OR comp_team != ?)`,
+        args: [preAssignedTeam, userId, preAssignedTeam],
       });
     }
   }
