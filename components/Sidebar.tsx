@@ -103,17 +103,6 @@ const COACH_NAV = [
     ),
   },
   {
-    href: "/schedule",
-    label: "Calendar",
-    icon: (a: boolean) => (
-      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-        <rect x="3" y="4" width="14" height="13" rx="2" stroke="currentColor" strokeWidth="1.5"
-          fill={a ? "currentColor" : "none"} fillOpacity={a ? 0.1 : 0}/>
-        <path d="M7 2v3M13 2v3M3 8h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      </svg>
-    ),
-  },
-  {
     href: "/team",
     label: "Coach Aid",
     icon: (a: boolean) => (
@@ -125,36 +114,23 @@ const COACH_NAV = [
     ),
   },
   {
+    href: "/schedule",
+    label: "Calendar",
+    icon: (a: boolean) => (
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <rect x="3" y="4" width="14" height="13" rx="2" stroke="currentColor" strokeWidth="1.5"
+          fill={a ? "currentColor" : "none"} fillOpacity={a ? 0.1 : 0}/>
+        <path d="M7 2v3M13 2v3M3 8h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      </svg>
+    ),
+  },
+  {
     href: "/benchmarks",
     label: "Benchmarks",
     icon: (a: boolean) => (
       <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
         <path d="M10 2l2 4 5 .5-3.5 3.5 1 5L10 13l-4.5 2 1-5L3 6.5 8 6z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"
           fill={a ? "currentColor" : "none"} fillOpacity={a ? 0.15 : 0}/>
-      </svg>
-    ),
-  },
-  {
-    href: "/community",
-    label: "Community",
-    icon: (a: boolean) => (
-      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-        <circle cx="7" cy="6" r="3" stroke="currentColor" strokeWidth="1.5"
-          fill={a ? "currentColor" : "none"} fillOpacity={a ? 0.15 : 0}/>
-        <circle cx="14" cy="6" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
-        <path d="M1 17c0-2.761 2.686-5 6-5s6 2.239 6 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        <path d="M14 10.5c1.657 0 3 1.343 3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      </svg>
-    ),
-  },
-  {
-    href: "/plans",
-    label: "Plans",
-    icon: (a: boolean) => (
-      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-        <rect x="3" y="3" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.5"
-          fill={a ? "currentColor" : "none"} fillOpacity={a ? 0.1 : 0}/>
-        <path d="M7 7h6M7 10h6M7 13h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
       </svg>
     ),
   },

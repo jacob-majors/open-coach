@@ -76,6 +76,10 @@ export default function LoginPage() {
         </div>
 
         <div className="card space-y-4">
+          <div className="text-center">
+            <p className="text-sm font-semibold text-white">Sign in or create an account</p>
+            <p className="text-xs text-white/30 mt-0.5">Open to all athletes and coaches</p>
+          </div>
           <button
             onClick={handleGoogle}
             disabled={loading}
