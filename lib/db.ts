@@ -190,6 +190,7 @@ export async function initializeDb() {
   total_minutes INTEGER DEFAULT 0,
   created_at TEXT DEFAULT (datetime('now'))
 )`,
+    `ALTER TABLE practice_plans ADD COLUMN practice_id INTEGER REFERENCES practices(id)`,
     `CREATE TABLE IF NOT EXISTS kilter_benchmarks (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   athlete_id INTEGER NOT NULL REFERENCES users(id),

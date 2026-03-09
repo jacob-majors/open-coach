@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
                    COUNT(p.id) as plan_count
             FROM users u
             LEFT JOIN plans p ON p.creator_id = u.id AND p.is_public = 1
-            WHERE u.role = 'coach' OR u.role = 'admin'
+            WHERE u.role = 'coach' AND (u.is_admin IS NULL OR u.is_admin = 0)
             GROUP BY u.id
             ORDER BY plan_count DESC, u.created_at DESC
             LIMIT 20`,

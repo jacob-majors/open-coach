@@ -28,12 +28,12 @@ export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!(await requireCoach(session))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  const { sessionName, dayType, warmupId, blocks, cooldown, coachNotes, practiceDate, teamFilter, totalMinutes } = await req.json();
+  const { sessionName, dayType, warmupId, blocks, cooldown, coachNotes, practiceDate, teamFilter, totalMinutes, practiceId } = await req.json();
   const db = getDb();
   const result = await db.execute({
-    sql: `INSERT INTO practice_plans (coach_id, session_name, day_type, warmup_id, blocks, cooldown, coach_notes, practice_date, team_filter, total_minutes)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    args: [session.userId, sessionName || null, dayType, warmupId || null, JSON.stringify(blocks || []), cooldown || null, coachNotes || null, practiceDate || null, teamFilter || null, totalMinutes || 0],
+    sql: `INSERT INTO practice_plans (coach_id, session_name, day_type, warmup_id, blocks, cooldown, coach_notes, practice_date, team_filter, total_minutes, practice_id)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    args: [session.userId, sessionName || null, dayType, warmupId || null, JSON.stringify(blocks || []), cooldown || null, coachNotes || null, practiceDate || null, teamFilter || null, totalMinutes || 0, practiceId || null],
   });
   return NextResponse.json({ success: true, id: Number(result.lastInsertRowid) });
 }

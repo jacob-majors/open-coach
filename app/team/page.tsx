@@ -96,6 +96,7 @@ export default function CoachAidPage() {
   const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [linkedPracticeId, setLinkedPracticeId] = useState<number | null>(null);
 
   if (!loading && !user) {
     return (
@@ -169,6 +170,7 @@ export default function CoachAidPage() {
         body: JSON.stringify({
           sessionName, dayType, warmupId, blocks, cooldown,
           coachNotes, practiceDate, teamFilter: teamFilter || null, totalMinutes,
+          practiceId: linkedPracticeId || null,
         }),
       });
       setSaved(true);
@@ -201,14 +203,18 @@ export default function CoachAidPage() {
           </div>
           <div>
             <label className="label">Link to Practice</label>
-            <select className="input" value={practiceDate} onChange={(e) => {
-              const selected = upcomingPractices.find(p => p.practice_date === e.target.value);
-              setPracticeDate(e.target.value);
-              if (selected && !teamFilter) setTeamFilter(selected.comp_team ? String(selected.comp_team) : "");
+            <select className="input" value={linkedPracticeId ?? ""} onChange={(e) => {
+              const id = e.target.value ? Number(e.target.value) : null;
+              setLinkedPracticeId(id);
+              const selected = upcomingPractices.find(p => p.id === id);
+              if (selected) {
+                setPracticeDate(selected.practice_date);
+                if (!teamFilter) setTeamFilter(selected.comp_team ? String(selected.comp_team) : "");
+              }
             }}>
               <option value="">Select upcoming practice...</option>
               {upcomingPractices.map((p) => (
-                <option key={p.id} value={p.practice_date}>
+                <option key={p.id} value={p.id}>
                   {new Date(p.practice_date + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })} — {p.title}{p.comp_team ? ` (Team ${p.comp_team})` : ""}
                 </option>
               ))}

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { PROTOCOLS } from "@/lib/protocols";
@@ -36,6 +36,15 @@ interface Practice {
   plan_id: number | null;
   coach_name: string | null;
   coach_username: string | null;
+  // Linked practice plan
+  practice_plan_id: number | null;
+  session_name: string | null;
+  day_type: string | null;
+  warmup_id: string | null;
+  blocks: string | null;
+  cooldown: string | null;
+  plan_coach_notes: string | null;
+  plan_total_minutes: number | null;
 }
 
 interface Coach {
@@ -616,11 +625,50 @@ function SubscribeModal({ filterTeam, onClose, copiedUrl, setCopiedUrl }: {
   );
 }
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function formatTime(t: string | null) {
+  if (!t) return null;
+  const [h, m] = t.split(":").map(Number);
+  const ampm = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 || 12;
+  return `${h12}:${String(m).padStart(2, "0")} ${ampm}`;
+}
+
 // ── Practice Card ─────────────────────────────────────────────────────────────
 
+const WARMUP_LABELS: Record<string, string> = {
+  open: "Open Warm-up", traversing: "Traversing", easy_circuits: "Easy Circuits",
+  dynamic_stretching: "Dynamic Stretching", games_warmup: "Tag / Warm-up Games", yoga_flow: "Yoga Flow",
+};
+const COOLDOWN_LABELS: Record<string, string> = {
+  none: "No Cool-down", easy_movement: "Easy Movement", static_stretch: "Static Stretching", antagonist: "Antagonist + Stretch",
+};
+const ALL_ACTIVITIES: Record<string, string> = {
+  limit_bouldering: "Limit Bouldering", campus_ladders: "Campus Board — Ladders", system_board: "System Board Sets",
+  deadhangs: "Dead Hangs", weighted_pullups: "Weighted Pull-ups", lock_offs: "Lock-offs", one_arm_rows: "One-Arm Rows",
+  flash_challenge: "Flash Challenge", kingpin: "King/Queen Pin",
+  "4x4": "4×4 Bouldering", linked_problems: "Linked Problems", circuit_climbing: "Circuits",
+  repeaters: "Hangboard Repeaters", density_hangs: "Density Hangs", horse: "HORSE", "10_in_10": "10 in 10 Challenge", add_on: "Add-On",
+  arc_training: "ARC Training", long_routes: "Long Routes / Laps", wall_traversing: "Wall Traversing",
+  board_laps: "Board Laps", contact_game: "Contact Game", downclimb: "Downclimb Game",
+  blind_sequence: "Blind Sequence", circuit_race: "Circuit Race",
+};
+const DAY_TYPE_LABELS: Record<string, string> = {
+  power: "Power Day", power_endurance: "Power Endurance", endurance: "Endurance Day",
+};
+
 function PracticeCard({ practice, onDelete }: { practice: Practice; onDelete: () => void }) {
+  const [expanded, setExpanded] = React.useState(false);
   const teamColor = practice.comp_team ? TEAM_COLORS[String(practice.comp_team)] : "bg-white/5 text-white/40 border-white/10";
   const displayNotes = practice.notes?.replace(/\[uid:[^\]]+\]/g, "").trim() || null;
+  const hasPlan = !!practice.practice_plan_id;
+
+  let parsedBlocks: Array<{ activityId: string; duration: number; notes?: string }> = [];
+  if (practice.blocks) {
+    try { parsedBlocks = JSON.parse(practice.blocks); } catch { /* ignore */ }
+  }
+
   return (
     <div className="card">
       <div className="flex items-start gap-3">
@@ -637,22 +685,86 @@ function PracticeCard({ practice, onDelete }: { practice: Practice; onDelete: ()
                 {practice.recurrence_rule === "biweekly" ? "bi-weekly" : "weekly"}
               </span>
             )}
+            {hasPlan && (
+              <span className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-semibold text-brand-400 border border-brand-500/20 bg-brand-500/10">
+                Plan linked
+              </span>
+            )}
           </div>
           <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-white/40">
-            {practice.start_time && <span>{practice.start_time}</span>}
+            {practice.start_time && <span>{formatTime(practice.start_time)}</span>}
             {practice.duration_minutes && <span>{practice.duration_minutes} min</span>}
             {practice.location && <span>{practice.location}</span>}
             {practice.coach_name && <span className="text-white/60">Coach: {practice.coach_name}</span>}
           </div>
           {displayNotes && <p className="mt-1.5 text-xs text-white/30 line-clamp-2">{displayNotes}</p>}
         </div>
-        <button onClick={onDelete}
-          className="shrink-0 p-1.5 rounded-lg text-white/20 hover:text-red-400 hover:bg-red-500/10 transition">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M2 3.5h10M5.5 3.5V2h3v1.5M5.5 6v4M8.5 6v4M3 3.5l.5 8.5h7l.5-8.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
+        <div className="flex items-center gap-1 shrink-0">
+          {hasPlan && (
+            <button onClick={() => setExpanded((v) => !v)}
+              className="p-1.5 rounded-lg text-white/30 hover:text-brand-400 hover:bg-brand-500/10 transition">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
+                style={{ transform: expanded ? "rotate(180deg)" : undefined, transition: "transform 0.2s" }}>
+                <path d="M3 5l4 4 4-4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          )}
+          <button onClick={onDelete}
+            className="p-1.5 rounded-lg text-white/20 hover:text-red-400 hover:bg-red-500/10 transition">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M2 3.5h10M5.5 3.5V2h3v1.5M5.5 6v4M8.5 6v4M3 3.5l.5 8.5h7l.5-8.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        </div>
       </div>
+
+      {/* Expanded practice plan */}
+      {expanded && hasPlan && (
+        <div className="mt-3 pt-3 border-t border-white/[0.06] space-y-2">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-xs font-semibold text-white">
+              {practice.session_name || DAY_TYPE_LABELS[practice.day_type || ""] || "Practice Plan"}
+            </span>
+            {practice.day_type && (
+              <span className="text-[10px] text-white/40">{DAY_TYPE_LABELS[practice.day_type]}</span>
+            )}
+            {practice.plan_total_minutes && (
+              <span className="ml-auto text-[10px] text-white/30">~{practice.plan_total_minutes} min total</span>
+            )}
+          </div>
+          {practice.warmup_id && (
+            <div className="rounded-lg bg-white/[0.03] px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wider text-white/30 mb-0.5">Warm-up</p>
+              <p className="text-xs text-white/70">{WARMUP_LABELS[practice.warmup_id] || practice.warmup_id}</p>
+            </div>
+          )}
+          {parsedBlocks.length > 0 && (
+            <div className="rounded-lg bg-white/[0.03] px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wider text-white/30 mb-1.5">Activities</p>
+              <ol className="space-y-1">
+                {parsedBlocks.map((b, i) => (
+                  <li key={i} className="text-xs text-white/70 flex items-start gap-2">
+                    <span className="text-white/30 shrink-0">{i + 1}.</span>
+                    <span>{ALL_ACTIVITIES[b.activityId] || b.activityId} <span className="text-white/30">({b.duration} min)</span></span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+          {practice.cooldown && practice.cooldown !== "none" && (
+            <div className="rounded-lg bg-white/[0.03] px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wider text-white/30 mb-0.5">Cool-down</p>
+              <p className="text-xs text-white/70">{COOLDOWN_LABELS[practice.cooldown] || practice.cooldown}</p>
+            </div>
+          )}
+          {practice.plan_coach_notes && (
+            <div className="rounded-lg bg-white/[0.03] px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wider text-white/30 mb-0.5">Coach Notes</p>
+              <p className="text-xs text-white/60 leading-relaxed">{practice.plan_coach_notes}</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

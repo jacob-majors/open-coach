@@ -198,8 +198,8 @@ export default function Sidebar() {
 
       {/* Role badge */}
       {user && (
-        <div className="px-5 pb-3">
-          <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold border ${
+        <div className="px-4 pb-3 flex justify-center">
+          <span className={`inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-bold tracking-wide border w-full ${
             user?.role === "admin"
               ? "bg-purple-500/10 text-purple-400 border-purple-500/20"
               : isCoach

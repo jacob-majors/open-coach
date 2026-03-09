@@ -16,9 +16,12 @@ export async function GET(req: NextRequest) {
                  p.duration_minutes, p.location, p.notes, p.is_recurring,
                  p.recurrence_rule, p.recurrence_end_date, p.parent_practice_id,
                  p.plan_id, p.created_by,
-                 u.id as coach_id, u.display_name as coach_name, u.username as coach_username
+                 u.id as coach_id, u.display_name as coach_name, u.username as coach_username,
+                 pp.id as practice_plan_id, pp.session_name, pp.day_type, pp.warmup_id,
+                 pp.blocks, pp.cooldown, pp.coach_notes as plan_coach_notes, pp.total_minutes as plan_total_minutes
           FROM practices p
           LEFT JOIN users u ON p.coach_id = u.id
+          LEFT JOIN practice_plans pp ON pp.practice_id = p.id
           WHERE p.practice_date >= ?
           ${team && team !== "all" ? "AND (p.comp_team = ? OR p.comp_team IS NULL)" : ""}
           ORDER BY p.practice_date ASC, p.start_time ASC
