@@ -22,6 +22,7 @@ export async function GET() {
     sql: `SELECT id, username, display_name, email, bio, max_boulder_grade,
                  comp_team, role, created_at
           FROM users
+          WHERE (role IS NULL OR role != 'admin') AND (is_admin IS NULL OR is_admin = 0)
           ORDER BY comp_team ASC NULLS LAST, display_name ASC`,
     args: [],
   });

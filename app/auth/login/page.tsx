@@ -1,13 +1,39 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/hooks/useAuth";
 
 export default function LoginPage() {
   const { loginWithGoogle } = useAuth();
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // true initially while checking redirect result
   const [error, setError] = useState("");
+
+  // On mount: complete any pending redirect sign-in flow
+  useEffect(() => {
+    (async () => {
+      try {
+        const { checkRedirectResult } = await import("@/lib/firebase");
+        const result = await checkRedirectResult();
+        if (result) {
+          const r = await fetch("/api/auth/firebase", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ idToken: result.idToken }),
+          });
+          if (r.ok) {
+            router.push("/dashboard");
+            return;
+          }
+          setError("Sign-in failed. Please try again.");
+        }
+      } catch {
+        // No pending redirect — safe to ignore
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [router]);
 
   const handleGoogle = async () => {
     setError("");
@@ -16,15 +42,18 @@ export default function LoginPage() {
       const user = await loginWithGoogle();
       if (user) {
         router.push("/dashboard");
-      } else {
-        setError("Sign-in failed. Please try again.");
       }
+      // user === null means redirect was initiated — page will navigate away
     } catch (err: unknown) {
+      const code = (err as { code?: string })?.code ?? "";
       const msg = err instanceof Error ? err.message : "";
-      if (msg.includes("popup-closed")) {
+      if (code === "auth/popup-closed-by-user" || msg.includes("popup-closed")) {
         setError("Sign-in cancelled.");
+      } else if (code === "auth/popup-blocked") {
+        setError("Popup was blocked — retrying with redirect...");
+        // loginWithGoogle already falls back to redirect, so nothing extra needed
       } else if (msg.includes("apiKey") || msg.includes("not configured")) {
-        setError("Firebase is not configured yet — add your credentials to .env.local");
+        setError("Firebase is not configured — contact your admin.");
       } else {
         setError("Sign-in failed. Please try again.");
       }

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { formatRelativeDate } from "@/lib/utils";
 
-type Tab = "feed" | "coaches" | "plans";
+type Tab = "feed" | "coaches" | "plans" | "practice-plans";
 
 interface FeedData {
   sends: Array<{
@@ -46,6 +46,21 @@ interface CoachesData {
   }>;
 }
 
+interface PracticePlansData {
+  plans: Array<{
+    id: number;
+    session_name: string | null;
+    day_type: string;
+    practice_date: string | null;
+    team_filter: string | null;
+    total_minutes: number;
+    coach_name: string | null;
+    coach_username: string;
+    created_at: string;
+    blocks: string;
+  }>;
+}
+
 interface PlansData {
   plans: Array<{
     id: number;
@@ -84,7 +99,8 @@ export default function CommunityPage() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/community?tab=${tab}`)
+    const url = tab === "practice-plans" ? "/api/practice-plans" : `/api/community?tab=${tab}`;
+    fetch(url)
       .then((r) => r.json())
       .then(setData)
       .finally(() => setLoading(false));
@@ -111,6 +127,7 @@ export default function CommunityPage() {
   const feedData = tab === "feed" ? (data as FeedData) : null;
   const coachesData = tab === "coaches" ? (data as CoachesData) : null;
   const plansData = tab === "plans" ? (data as PlansData) : null;
+  const practicePlansData = tab === "practice-plans" ? (data as unknown as PracticePlansData) : null;
 
   // Merge feed items sorted by date
   const feedItems: Array<{ type: "send" | "test"; date: string; data: FeedData["sends"][0] | FeedData["tests"][0] }> = [];
@@ -153,7 +170,7 @@ export default function CommunityPage() {
 
       {/* Tabs */}
       <div className="mb-6 flex gap-1 rounded-xl border border-white/[0.06] bg-white/[0.03] p-1">
-        {(["feed", "coaches", "plans"] as Tab[]).map((t) => (
+        {(["feed", "coaches", "plans", "practice-plans"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -163,7 +180,7 @@ export default function CommunityPage() {
                 : "text-white/40 hover:text-white/70"
             }`}
           >
-            {t === "feed" ? "Activity Feed" : t === "coaches" ? "Coaches" : "Shared Plans"}
+            {t === "feed" ? "Activity Feed" : t === "coaches" ? "Coaches" : t === "plans" ? "Shared Plans" : "Practice Plans"}
           </button>
         ))}
       </div>
@@ -380,6 +397,56 @@ export default function CommunityPage() {
                         >
                           View
                         </Link>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
+          {/* Practice Plans Tab */}
+          {tab === "practice-plans" && practicePlansData && (
+            <div className="space-y-3">
+              {(!practicePlansData.plans || practicePlansData.plans.length === 0) ? (
+                <div className="card py-16 text-center">
+                  <p className="text-white/40 mb-2">No practice plans saved yet.</p>
+                  <p className="text-xs text-white/25">Build and save plans in Coach Aid.</p>
+                </div>
+              ) : (
+                practicePlansData.plans.map((plan) => {
+                  const blocks = (() => { try { return JSON.parse(plan.blocks); } catch { return []; } })();
+                  const DAY_COLORS: Record<string, string> = {
+                    power: "text-orange-400",
+                    power_endurance: "text-yellow-400",
+                    endurance: "text-blue-400",
+                  };
+                  return (
+                    <div key={plan.id} className="card">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <span className={`text-xs font-semibold capitalize ${DAY_COLORS[plan.day_type] || "text-white/60"}`}>
+                              {plan.day_type.replace("_", " ")}
+                            </span>
+                            {plan.team_filter && (
+                              <span className="text-[10px] text-white/30 border border-white/10 rounded px-1.5 py-0.5">
+                                Team {plan.team_filter}
+                              </span>
+                            )}
+                            <span className="text-[10px] text-white/20">{plan.total_minutes} min</span>
+                          </div>
+                          <h3 className="text-sm font-semibold text-white">
+                            {plan.session_name || "Untitled Practice Plan"}
+                          </h3>
+                          {plan.practice_date && (
+                            <p className="text-xs text-white/40 mt-0.5">
+                              {new Date(plan.practice_date + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+                            </p>
+                          )}
+                          <p className="text-xs text-white/30 mt-1">
+                            {blocks.length} activit{blocks.length !== 1 ? "ies" : "y"} · by {plan.coach_name || plan.coach_username}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   );

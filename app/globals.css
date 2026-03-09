@@ -78,3 +78,48 @@
     @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium;
   }
 }
+
+@media print {
+  html, body {
+    background: #ffffff !important;
+    color: #111111 !important;
+  }
+
+  /* Hide sidebar, nav, and interactive controls */
+  nav, aside, header,
+  [data-sidebar],
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Reset dark cards to white */
+  .card, .glass {
+    background: #ffffff !important;
+    border-color: #cccccc !important;
+    color: #111111 !important;
+  }
+
+  /* Force dark text everywhere */
+  * {
+    color: #111111 !important;
+    border-color: #cccccc !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+  }
+
+  /* Preserve brand color for headings/labels */
+  h1, h2, h3, h4, strong {
+    color: #000000 !important;
+  }
+
+  /* Remove backdrop effects */
+  .backdrop-blur-sm,
+  .backdrop-blur {
+    backdrop-filter: none !important;
+  }
+
+  a {
+    text-decoration: none !important;
+    color: #000000 !important;
+  }
+}

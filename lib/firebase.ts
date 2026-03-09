@@ -45,13 +45,46 @@ async function getProvider() {
   return _provider;
 }
 
-export async function signInWithGoogle() {
+function isMobileBrowser() {
+  if (typeof navigator === "undefined") return false;
+  return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+}
+
+export async function signInWithGoogle(): Promise<{ user: import("firebase/auth").User; idToken: string } | null> {
   if (!isConfigured()) {
     throw new Error("Firebase is not configured — add NEXT_PUBLIC_FIREBASE_API_KEY to .env.local");
   }
-  const { signInWithPopup } = await import("firebase/auth");
+  const { signInWithPopup, signInWithRedirect } = await import("firebase/auth");
   const [firebaseAuth, provider] = await Promise.all([getFirebaseAuth(), getProvider()]);
-  const result = await signInWithPopup(firebaseAuth, provider);
+
+  // Mobile browsers block popups — use redirect flow instead
+  if (isMobileBrowser()) {
+    await signInWithRedirect(firebaseAuth, provider);
+    return null; // page navigates away; result handled by checkRedirectResult on return
+  }
+
+  try {
+    const result = await signInWithPopup(firebaseAuth, provider);
+    const idToken = await result.user.getIdToken();
+    return { user: result.user, idToken };
+  } catch (err: unknown) {
+    const code = (err as { code?: string })?.code ?? "";
+    // Popup was blocked or closed — fall back to redirect
+    if (code === "auth/popup-blocked" || code === "auth/popup-closed-by-user") {
+      await signInWithRedirect(firebaseAuth, provider);
+      return null;
+    }
+    throw err;
+  }
+}
+
+// Call on login page mount to complete a redirect sign-in flow
+export async function checkRedirectResult(): Promise<{ user: import("firebase/auth").User; idToken: string } | null> {
+  if (!isConfigured()) return null;
+  const { getRedirectResult } = await import("firebase/auth");
+  const firebaseAuth = await getFirebaseAuth();
+  const result = await getRedirectResult(firebaseAuth);
+  if (!result) return null;
   const idToken = await result.user.getIdToken();
   return { user: result.user, idToken };
 }

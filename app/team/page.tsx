@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useRouter } from "next/navigation";
 
@@ -76,6 +76,14 @@ const TEAM_OPTIONS = [
 export default function CoachAidPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+
+  const [upcomingPractices, setUpcomingPractices] = useState<Array<{id: number; title: string; practice_date: string; comp_team: number | null}>>([]);
+
+  useEffect(() => {
+    fetch("/api/practices?team=all")
+      .then((r) => r.json())
+      .then((d) => setUpcomingPractices(d.practices || []));
+  }, []);
 
   const [dayType, setDayType] = useState<DayType>("power");
   const [warmupId, setWarmupId] = useState("open");
@@ -192,8 +200,19 @@ export default function CoachAidPage() {
             <input className="input" placeholder="e.g. Tuesday Practice" value={sessionName} onChange={(e) => setSessionName(e.target.value)} />
           </div>
           <div>
-            <label className="label">Practice Date</label>
-            <input type="date" className="input" value={practiceDate} onChange={(e) => setPracticeDate(e.target.value)} />
+            <label className="label">Link to Practice</label>
+            <select className="input" value={practiceDate} onChange={(e) => {
+              const selected = upcomingPractices.find(p => p.practice_date === e.target.value);
+              setPracticeDate(e.target.value);
+              if (selected && !teamFilter) setTeamFilter(selected.comp_team ? String(selected.comp_team) : "");
+            }}>
+              <option value="">Select upcoming practice...</option>
+              {upcomingPractices.map((p) => (
+                <option key={p.id} value={p.practice_date}>
+                  {new Date(p.practice_date + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })} — {p.title}{p.comp_team ? ` (Team ${p.comp_team})` : ""}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
         <div>

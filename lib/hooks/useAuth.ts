@@ -28,11 +28,13 @@ export function useAuth() {
 
   const loginWithGoogle = async () => {
     const { signInWithGoogle } = await import("@/lib/firebase");
-    const { idToken } = await signInWithGoogle();
+    const result = await signInWithGoogle();
+    // null means redirect was triggered — page will navigate away, no further action needed
+    if (!result) return null;
     const r = await fetch("/api/auth/firebase", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ idToken }),
+      body: JSON.stringify({ idToken: result.idToken }),
     });
     if (r.ok) {
       const me = await fetch("/api/auth/me").then((r2) => r2.json());

@@ -39,6 +39,7 @@ export default function ProfilePage() {
   const [editing, setEditing] = useState(false);
   const [following, setFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
+  const [fitnessBenchmarks, setFitnessBenchmarks] = useState<Array<{id: number; type: string; value: number; recorded_at: string}>>([]);
 
   const [editForm, setEditForm] = useState({
     displayName: "", bio: "", bodyweightLbs: "",
@@ -69,6 +70,16 @@ export default function ProfilePage() {
         setLoading(false);
       });
   }, [username]);
+
+  useEffect(() => {
+    if (!data) return;
+    if (!authUser) return;
+    const isCoach = authUser.role === "coach" || authUser.role === "admin";
+    if (!isCoach && !data.isOwnProfile) return;
+    fetch(`/api/benchmarks?userId=${data.user.id}`)
+      .then((r) => r.json())
+      .then((d) => setFitnessBenchmarks((d.benchmarks || []).filter((b: {type: string}) => ["pullups", "pushups", "plank"].includes(b.type))));
+  }, [data, authUser]);
 
   const handleFollow = async () => {
     if (!authUser) { router.push("/auth/login"); return; }
@@ -350,6 +361,49 @@ export default function ProfilePage() {
                   </svg>
                 </Link>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Fitness benchmarks — visible to coaches */}
+        {fitnessBenchmarks.length > 0 && (authUser?.role === "coach" || authUser?.role === "admin" || data.isOwnProfile) && (
+          <div className="card md:col-span-2">
+            <h2 className="text-sm font-semibold text-white mb-4">Fitness Progress</h2>
+            <div className="grid gap-4 sm:grid-cols-3">
+              {["pullups", "pushups", "plank"].map((type) => {
+                const entries = fitnessBenchmarks.filter((b) => b.type === type).slice(0, 10).reverse();
+                if (entries.length === 0) return null;
+                const latest = entries[entries.length - 1];
+                const LABELS: Record<string, string> = { pullups: "Pull-ups", pushups: "Push-ups", plank: "Plank" };
+                const vals = entries.map((e) => e.value);
+                const min = Math.min(...vals) * 0.9;
+                const max = Math.max(...vals) * 1.1 || 1;
+                const w = 160, h = 50;
+                const points = entries.map((e, i) => {
+                  const x = entries.length > 1 ? (i / (entries.length - 1)) * w : w / 2;
+                  const y = h - ((e.value - min) / (max - min || 1)) * h;
+                  return `${x},${y}`;
+                }).join(" ");
+                return (
+                  <div key={type} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs text-white/50">{LABELS[type]}</p>
+                      <p className="text-lg font-bold text-brand-400">{latest.value}{type === "plank" ? "s" : ""}</p>
+                    </div>
+                    {entries.length > 1 && (
+                      <svg width={w} height={h} className="overflow-visible">
+                        <polyline points={points} fill="none" stroke="#eab308" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        {entries.map((e, i) => {
+                          const x = (i / (entries.length - 1)) * w;
+                          const y = h - ((e.value - min) / (max - min || 1)) * h;
+                          return <circle key={i} cx={x} cy={y} r="2.5" fill="#eab308" />;
+                        })}
+                      </svg>
+                    )}
+                    <p className="text-[10px] text-white/20 mt-2">{entries.length} entries</p>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

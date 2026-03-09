@@ -176,6 +176,31 @@ export async function initializeDb() {
       created_at TEXT DEFAULT (datetime('now'))
     )`,
     `ALTER TABLE users ADD COLUMN comp_team INTEGER`,
+    `CREATE TABLE IF NOT EXISTS practice_plans (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  coach_id INTEGER NOT NULL REFERENCES users(id),
+  session_name TEXT,
+  day_type TEXT NOT NULL,
+  warmup_id TEXT,
+  blocks TEXT NOT NULL DEFAULT '[]',
+  cooldown TEXT,
+  coach_notes TEXT,
+  practice_date TEXT,
+  team_filter TEXT,
+  total_minutes INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now'))
+)`,
+    `CREATE TABLE IF NOT EXISTS kilter_benchmarks (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  athlete_id INTEGER NOT NULL REFERENCES users(id),
+  coach_id INTEGER NOT NULL REFERENCES users(id),
+  climb_name TEXT NOT NULL,
+  grade TEXT,
+  angle INTEGER,
+  notes TEXT,
+  is_completed INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now'))
+)`,
   ];
 
   for (const sql of tables) {

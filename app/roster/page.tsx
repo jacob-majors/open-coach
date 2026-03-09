@@ -88,7 +88,6 @@ export default function RosterPage() {
 
   const [athletes, setAthletes] = useState<RosterUser[]>([]);
   const [fetching, setFetching] = useState(true);
-  const [updating, setUpdating] = useState<number | null>(null);
   const [filterTeam, setFilterTeam] = useState<string>("all");
 
   // Add modal
@@ -121,19 +120,6 @@ export default function RosterPage() {
       .then((d) => setAthletes(d.athletes || []))
       .finally(() => setFetching(false));
   }, [user, loading]);
-
-  const assignTeam = async (athleteId: number, team: number | null) => {
-    setUpdating(athleteId);
-    await fetch("/api/roster", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: athleteId, compTeam: team }),
-    });
-    setAthletes((prev) =>
-      prev.map((a) => (a.id === athleteId ? { ...a, comp_team: team } : a))
-    );
-    setUpdating(null);
-  };
 
   const handleCsvFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -368,18 +354,6 @@ export default function RosterPage() {
                       </svg>
                     </button>
                   )}
-                  {[1, 2, 3, 4].map((t) => (
-                    <button key={t} onClick={() => assignTeam(athlete.id, athlete.comp_team === t ? null : t)}
-                      disabled={updating === athlete.id}
-                      title={`${athlete.comp_team === t ? "Remove from" : "Assign to"} Team ${t}`}
-                      className={`h-7 w-7 rounded-lg text-xs font-bold transition ${
-                        athlete.comp_team === t
-                          ? "bg-brand-500 text-black"
-                          : "border border-white/10 bg-white/5 text-white/40 hover:text-white hover:bg-white/10"
-                      }`}>
-                      {t}
-                    </button>
-                  ))}
                 </div>
               </div>
             </div>

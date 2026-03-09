@@ -111,17 +111,24 @@ export async function POST(req: NextRequest) {
   let imported = 0;
   let skipped = 0;
 
+  // Fetch all existing UIDs at once to avoid per-event DB queries (prevents timeout)
+  const existingNotesRows = await db.execute({
+    sql: `SELECT notes FROM practices WHERE notes LIKE '%[uid:%'`,
+    args: [],
+  });
+  const existingUids = new Set<string>();
+  for (const row of existingNotesRows.rows) {
+    const m = (row.notes as string)?.match(/\[uid:([^\]]+)\]/);
+    if (m) existingUids.add(m[1]);
+  }
+
   for (const ev of events) {
     if (limit != null && imported >= limit) { skipped++; continue; }
     const { dateStr, timeStr } = parseIcalDate(ev.dtstart);
     if (dateStr < todayStr || dateStr > endStr) { skipped++; continue; }
 
     // Avoid duplicate imports by checking uid
-    const existing = await db.execute({
-      sql: `SELECT id FROM practices WHERE notes LIKE ?`,
-      args: [`%[uid:${ev.uid}]%`],
-    });
-    if (existing.rows.length > 0) { skipped++; continue; }
+    if (existingUids.has(ev.uid)) { skipped++; continue; }
 
     const durationMinutes = parseDuration(ev.dtstart, ev.dtend);
     const notes = [ev.description, ev.uid ? `[uid:${ev.uid}]` : null].filter(Boolean).join("\n");

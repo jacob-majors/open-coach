@@ -125,6 +125,16 @@ const COACH_NAV = [
     ),
   },
   {
+    href: "/benchmarks",
+    label: "Benchmarks",
+    icon: (a: boolean) => (
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+        <path d="M10 2l2 4 5 .5-3.5 3.5 1 5L10 13l-4.5 2 1-5L3 6.5 8 6z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"
+          fill={a ? "currentColor" : "none"} fillOpacity={a ? 0.15 : 0}/>
+      </svg>
+    ),
+  },
+  {
     href: "/community",
     label: "Community",
     icon: (a: boolean) => (
