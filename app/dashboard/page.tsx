@@ -54,7 +54,15 @@ interface DashboardData {
 interface CoachStats {
   totalAthletes: number;
   byTeam: Record<number, number>;
-  sessionsWithPlan: number;
+  upcomingPractices: number;
+  athletes: Array<{
+    display_name: string | null;
+    username: string;
+    comp_team: number | null;
+    max_boulder_grade: string | null;
+    last_test: string | null;
+    logs_this_week: number;
+  }>;
 }
 
 export default function DashboardPage() {
@@ -401,9 +409,9 @@ function CoachDashboard({
       {/* Second row stats */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 mb-8">
         <div className="card">
-          <p className="text-[10px] font-medium uppercase tracking-wider text-white/40 mb-1">Sessions w/ Plan</p>
-          <p className="text-3xl font-bold text-white">{stats?.sessionsWithPlan ?? "—"}</p>
-          <p className="text-xs text-white/30 mt-0.5">have a practice plan</p>
+          <p className="text-[10px] font-medium uppercase tracking-wider text-white/40 mb-1">Upcoming Practices</p>
+          <p className="text-3xl font-bold text-white">{stats?.upcomingPractices ?? "—"}</p>
+          <p className="text-xs text-white/30 mt-0.5">next 7 days</p>
         </div>
         <div className="card">
           <p className="text-[10px] font-medium uppercase tracking-wider text-white/40 mb-1">Comp Team 4</p>
@@ -419,16 +427,68 @@ function CoachDashboard({
         </div>
       </div>
 
+      {/* Athlete activity table */}
+      {stats?.athletes && stats.athletes.length > 0 && (
+        <div className="card mb-8 overflow-hidden">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-white">Athlete Activity</h2>
+            <Link href="/roster" className="text-xs text-brand-400 hover:underline">View Roster →</Link>
+          </div>
+          <div className="overflow-x-auto -mx-4 px-4">
+            <table className="w-full text-sm min-w-[480px]">
+              <thead>
+                <tr className="border-b border-white/[0.06]">
+                  <th className="text-left text-[10px] font-medium uppercase tracking-wider text-white/30 pb-2 pr-4">Athlete</th>
+                  <th className="text-left text-[10px] font-medium uppercase tracking-wider text-white/30 pb-2 pr-4">Team</th>
+                  <th className="text-left text-[10px] font-medium uppercase tracking-wider text-white/30 pb-2 pr-4">Grade</th>
+                  <th className="text-right text-[10px] font-medium uppercase tracking-wider text-white/30 pb-2 pr-4">Logs (7d)</th>
+                  <th className="text-right text-[10px] font-medium uppercase tracking-wider text-white/30 pb-2">Last Test</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(activeTeam ? stats.athletes.filter((a) => a.comp_team === activeTeam) : stats.athletes).map((a, i) => (
+                  <tr key={i} className="border-b border-white/[0.04] last:border-0">
+                    <td className="py-2.5 pr-4">
+                      <Link href={`/profile/${a.username}`} className="font-medium text-white hover:text-brand-400 transition">
+                        {a.display_name || a.username}
+                      </Link>
+                    </td>
+                    <td className="py-2.5 pr-4">
+                      {a.comp_team ? (
+                        <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-semibold border ${TEAM_COLORS[a.comp_team]?.pill ?? "text-white/40"}`}>
+                          T{a.comp_team}
+                        </span>
+                      ) : (
+                        <span className="text-white/20 text-xs">—</span>
+                      )}
+                    </td>
+                    <td className="py-2.5 pr-4 text-white/60">{a.max_boulder_grade || "—"}</td>
+                    <td className="py-2.5 pr-4 text-right">
+                      <span className={`text-sm font-semibold ${(a.logs_this_week as number) > 0 ? "text-brand-400" : "text-white/20"}`}>
+                        {a.logs_this_week ?? 0}
+                      </span>
+                    </td>
+                    <td className="py-2.5 text-right text-xs text-white/30">
+                      {a.last_test ? new Date(a.last_test).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* Active team filter indicator */}
       {activeTeam && (
         <div className={`mb-4 flex items-center gap-2 rounded-xl border px-4 py-2.5 ${TEAM_COLORS[activeTeam].card} bg-white/[0.02]`}>
           <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold border ${TEAM_COLORS[activeTeam].pill}`}>
             Comp Team {activeTeam}
           </span>
-          <span className="text-sm text-white/60">selected — viewing team filter on Roster</span>
-          <Link href={`/roster?team=${activeTeam}`} className="ml-auto text-xs text-brand-400 hover:underline shrink-0">
-            View Roster →
-          </Link>
+          <span className="text-sm text-white/60">click a team card above to filter</span>
+          <button onClick={() => setActiveTeam(null)} className="ml-auto text-xs text-white/40 hover:text-white transition">
+            Clear ×
+          </button>
         </div>
       )}
 
